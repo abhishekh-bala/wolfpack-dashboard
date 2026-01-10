@@ -1,13 +1,49 @@
-// Update this page (the content is just a fallback if you fail to update the page)
+import { useState, useEffect } from 'react';
+import { LoginPage } from '@/components/LoginPage';
+import { Dashboard } from '@/components/Dashboard';
+import { isAuthenticated, saveCredentials } from '@/lib/storage';
+
+// Initialize default credentials on first load
+const initializeCredentials = () => {
+  const stored = localStorage.getItem('wolfpack_credentials');
+  if (!stored) {
+    saveCredentials({
+      username: 'abhishekh_dey',
+      password: "D1asdfghjkl;'",
+    });
+  }
+};
 
 const Index = () => {
-  return (
-    <div className="flex min-h-screen items-center justify-center bg-background">
-      <div className="text-center">
-        <h1 className="mb-4 text-4xl font-bold">Welcome to Your Blank App</h1>
-        <p className="text-xl text-muted-foreground">Start building your amazing project here!</p>
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    initializeCredentials();
+    setIsLoggedIn(isAuthenticated());
+    setIsLoading(false);
+  }, []);
+
+  const handleLogin = () => {
+    setIsLoggedIn(true);
+  };
+
+  const handleLogout = () => {
+    setIsLoggedIn(false);
+  };
+
+  if (isLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-background">
+        <div className="w-8 h-8 border-2 border-primary border-t-transparent rounded-full animate-spin" />
       </div>
-    </div>
+    );
+  }
+
+  return isLoggedIn ? (
+    <Dashboard onLogout={handleLogout} />
+  ) : (
+    <LoginPage onLogin={handleLogin} />
   );
 };
 
