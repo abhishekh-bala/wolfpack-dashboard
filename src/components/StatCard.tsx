@@ -5,46 +5,48 @@ interface StatCardProps {
   value: string;
   subtitle?: string;
   icon: LucideIcon;
-  trend?: 'up' | 'down' | 'neutral';
   variant?: 'default' | 'success' | 'warning' | 'danger';
+  compact?: boolean;
 }
 
 export function StatCard({ 
   title, 
   value, 
   subtitle, 
-  icon: Icon,
-  trend,
-  variant = 'default'
+  icon: Icon, 
+  variant = 'default',
+  compact = false 
 }: StatCardProps) {
-  const variantStyles = {
-    default: 'before:bg-gradient-to-r before:from-primary before:to-accent',
-    success: 'before:bg-gradient-to-r before:from-success before:to-emerald-400',
-    warning: 'before:bg-gradient-to-r before:from-warning before:to-amber-400',
-    danger: 'before:bg-gradient-to-r before:from-destructive before:to-red-400',
+  const gradientClasses = {
+    default: 'gradient-primary',
+    success: 'gradient-success',
+    warning: 'bg-warning',
+    danger: 'gradient-danger',
   };
 
-  const iconColors = {
-    default: 'text-primary',
-    success: 'text-success',
-    warning: 'text-warning',
-    danger: 'text-destructive',
+  const iconBgClasses = {
+    default: 'bg-primary/20 text-primary',
+    success: 'bg-success/20 text-success',
+    warning: 'bg-warning/20 text-warning',
+    danger: 'bg-destructive/20 text-destructive',
   };
 
   return (
-    <div className={`stat-card ${variantStyles[variant]} before:h-1`}>
+    <div className={`stat-card group hover:border-primary/30 transition-all duration-300 ${compact ? 'p-3' : ''}`}>
       <div className="flex items-start justify-between">
-        <div>
-          <p className="text-muted-foreground text-sm font-medium">{title}</p>
-          <p className="text-2xl font-bold text-foreground mt-1 font-mono">{value}</p>
+        <div className="flex-1">
+          <p className={`text-muted-foreground font-medium ${compact ? 'text-xs' : 'text-sm'}`}>{title}</p>
+          <p className={`font-bold text-foreground ${compact ? 'text-xl mt-0.5' : 'text-3xl mt-1'}`}>{value}</p>
           {subtitle && (
-            <p className="text-xs text-muted-foreground mt-1">{subtitle}</p>
+            <p className={`text-muted-foreground ${compact ? 'text-[10px] mt-0.5' : 'text-xs mt-1'}`}>{subtitle}</p>
           )}
         </div>
-        <div className={`p-2 rounded-lg bg-muted/50 ${iconColors[variant]}`}>
-          <Icon className="w-5 h-5" />
+        <div className={`${compact ? 'w-8 h-8' : 'w-10 h-10'} rounded-lg ${iconBgClasses[variant]} flex items-center justify-center group-hover:scale-110 transition-transform`}>
+          <Icon className={compact ? 'w-4 h-4' : 'w-5 h-5'} />
         </div>
       </div>
+      {/* Animated underline on hover */}
+      <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-gradient-to-r from-transparent via-primary/50 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
     </div>
   );
 }

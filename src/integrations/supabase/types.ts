@@ -14,7 +14,66 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      formula_overrides: {
+        Row: {
+          created_at: string
+          enabled: boolean
+          formula: string
+          id: string
+          name: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          enabled?: boolean
+          formula: string
+          id: string
+          name: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          enabled?: boolean
+          formula?: string
+          id?: string
+          name?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      guide_targets: {
+        Row: {
+          chat_count: number
+          created_at: string
+          id: string
+          name: string
+          target_conversion: number
+          target_orders: number
+          target_revenue: number
+          updated_at: string
+        }
+        Insert: {
+          chat_count?: number
+          created_at?: string
+          id?: string
+          name: string
+          target_conversion?: number
+          target_orders?: number
+          target_revenue?: number
+          updated_at?: string
+        }
+        Update: {
+          chat_count?: number
+          created_at?: string
+          id?: string
+          name?: string
+          target_conversion?: number
+          target_orders?: number
+          target_revenue?: number
+          updated_at?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never

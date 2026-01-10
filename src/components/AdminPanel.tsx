@@ -1,17 +1,9 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
-import { 
-  GuideTarget, 
-  FormulaOverride, 
-  getTargets, 
-  saveTargets,
-  getFormulas,
-  saveFormulas,
-  getDefaultFormulas
-} from '@/lib/storage';
+import { GuideTarget, FormulaOverride } from '@/hooks/useGuideTargets';
 import { 
   Plus, 
   Trash2, 
@@ -19,9 +11,9 @@ import {
   RotateCcw,
   Settings2,
   Users,
-  Calculator
+  Calculator,
+  Loader2
 } from 'lucide-react';
-import { useToast } from '@/hooks/use-toast';
 import {
   Dialog,
   DialogContent,
@@ -30,17 +22,36 @@ import {
   DialogTrigger,
 } from '@/components/ui/dialog';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { useToast } from '@/hooks/use-toast';
 
 interface AdminPanelProps {
-  onTargetsChange: (targets: GuideTarget[]) => void;
   targets: GuideTarget[];
+  formulas: FormulaOverride[];
+  onSaveTargets: (targets: GuideTarget[]) => Promise<void>;
+  onSaveFormulas: (formulas: FormulaOverride[]) => Promise<void>;
+  onResetFormulas: () => Promise<void>;
 }
 
-export function AdminPanel({ onTargetsChange, targets }: AdminPanelProps) {
+export function AdminPanel({ 
+  targets, 
+  formulas, 
+  onSaveTargets, 
+  onSaveFormulas, 
+  onResetFormulas 
+}: AdminPanelProps) {
   const [localTargets, setLocalTargets] = useState<GuideTarget[]>(targets);
-  const [formulas, setFormulas] = useState<FormulaOverride[]>(getFormulas());
+  const [localFormulas, setLocalFormulas] = useState<FormulaOverride[]>(formulas);
   const [newGuideName, setNewGuideName] = useState('');
+  const [isSaving, setIsSaving] = useState(false);
   const { toast } = useToast();
+
+  useEffect(() => {
+    setLocalTargets(targets);
+  }, [targets]);
+
+  useEffect(() => {
+    setLocalFormulas(formulas);
+  }, [formulas]);
 
   const handleAddGuide = () => {
     if (!newGuideName.trim()) {
@@ -77,7 +88,7 @@ export function AdminPanel({ onTargetsChange, targets }: AdminPanelProps) {
     setNewGuideName('');
     toast({
       title: 'Guide Added',
-      description: `${newGuideName.trim()} has been added to the pool.`,
+      description: `${newGuideName.trim()} has been added. Don't forget to save!`,
     });
   };
 
@@ -85,7 +96,7 @@ export function AdminPanel({ onTargetsChange, targets }: AdminPanelProps) {
     setLocalTargets(localTargets.filter((t) => t.name !== name));
     toast({
       title: 'Guide Removed',
-      description: `${name} has been removed from the pool.`,
+      description: `${name} has been removed. Don't forget to save!`,
     });
   };
 
@@ -101,54 +112,45 @@ export function AdminPanel({ onTargetsChange, targets }: AdminPanelProps) {
     );
   };
 
-  const handleSaveTargets = () => {
-    saveTargets(localTargets);
-    onTargetsChange(localTargets);
-    toast({
-      title: 'Saved',
-      description: 'All targets have been saved successfully.',
-    });
+  const handleSaveTargets = async () => {
+    setIsSaving(true);
+    await onSaveTargets(localTargets);
+    setIsSaving(false);
   };
 
   const handleFormulaChange = (id: string, formula: string) => {
-    setFormulas(
-      formulas.map((f) => (f.id === id ? { ...f, formula } : f))
+    setLocalFormulas(
+      localFormulas.map((f) => (f.id === id ? { ...f, formula } : f))
     );
   };
 
   const handleFormulaToggle = (id: string, enabled: boolean) => {
-    setFormulas(
-      formulas.map((f) => (f.id === id ? { ...f, enabled } : f))
+    setLocalFormulas(
+      localFormulas.map((f) => (f.id === id ? { ...f, enabled } : f))
     );
   };
 
-  const handleSaveFormulas = () => {
-    saveFormulas(formulas);
-    toast({
-      title: 'Formulas Saved',
-      description: 'Formula overrides have been saved.',
-    });
+  const handleSaveFormulas = async () => {
+    setIsSaving(true);
+    await onSaveFormulas(localFormulas);
+    setIsSaving(false);
   };
 
-  const handleResetFormulas = () => {
-    const defaults = getDefaultFormulas();
-    setFormulas(defaults);
-    saveFormulas(defaults);
-    toast({
-      title: 'Formulas Reset',
-      description: 'All formulas have been reset to defaults.',
-    });
+  const handleResetFormulas = async () => {
+    setIsSaving(true);
+    await onResetFormulas();
+    setIsSaving(false);
   };
 
   return (
     <Dialog>
       <DialogTrigger asChild>
-        <Button variant="outline" className="gap-2">
+        <Button variant="outline" className="gap-2 border-primary/30 hover:border-primary hover:bg-primary/10">
           <Settings2 className="w-4 h-4" />
           Admin Panel
         </Button>
       </DialogTrigger>
-      <DialogContent className="max-w-4xl max-h-[80vh] overflow-hidden flex flex-col bg-card border-border">
+      <DialogContent className="max-w-4xl max-h-[85vh] overflow-hidden flex flex-col bg-card border-border">
         <DialogHeader>
           <DialogTitle className="text-xl font-bold text-gradient">
             Admin Configuration
@@ -260,8 +262,12 @@ export function AdminPanel({ onTargetsChange, targets }: AdminPanelProps) {
             </div>
 
             <div className="flex justify-end gap-2 pt-4 border-t border-border mt-4">
-              <Button onClick={handleSaveTargets} className="gap-2 gradient-primary">
-                <Save className="w-4 h-4" />
+              <Button 
+                onClick={handleSaveTargets} 
+                className="gap-2 gradient-primary"
+                disabled={isSaving}
+              >
+                {isSaving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
                 Save All Targets
               </Button>
             </div>
@@ -279,7 +285,7 @@ export function AdminPanel({ onTargetsChange, targets }: AdminPanelProps) {
             </p>
 
             <div className="flex-1 overflow-auto space-y-4 pr-2">
-              {formulas.map((formula) => (
+              {localFormulas.map((formula) => (
                 <div key={formula.id} className="glass-card p-4">
                   <div className="flex items-center justify-between mb-3">
                     <div className="flex items-center gap-3">
@@ -303,12 +309,21 @@ export function AdminPanel({ onTargetsChange, targets }: AdminPanelProps) {
             </div>
 
             <div className="flex justify-end gap-2 pt-4 border-t border-border mt-4">
-              <Button variant="outline" onClick={handleResetFormulas} className="gap-2">
+              <Button 
+                variant="outline" 
+                onClick={handleResetFormulas} 
+                className="gap-2"
+                disabled={isSaving}
+              >
                 <RotateCcw className="w-4 h-4" />
                 Reset to Defaults
               </Button>
-              <Button onClick={handleSaveFormulas} className="gap-2 gradient-primary">
-                <Save className="w-4 h-4" />
+              <Button 
+                onClick={handleSaveFormulas} 
+                className="gap-2 gradient-primary"
+                disabled={isSaving}
+              >
+                {isSaving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
                 Save Formulas
               </Button>
             </div>
