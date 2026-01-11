@@ -26,48 +26,56 @@ export function useGuideTargets() {
 
   // Fetch targets from database
   const fetchTargets = async () => {
-    const { data, error } = await supabase
-      .from('guide_targets')
-      .select('*')
-      .order('name');
-    
-    if (error) {
-      console.error('Error fetching targets:', error);
-      return;
+    try {
+      const { data, error } = await supabase
+        .from('guide_targets')
+        .select('*')
+        .order('name');
+      
+      if (error) {
+        console.error('Error fetching targets:', error);
+        return;
+      }
+      
+      const mapped: GuideTarget[] = (data || []).map((row) => ({
+        id: row.id,
+        name: row.name,
+        targetOrders: row.target_orders,
+        targetRevenue: Number(row.target_revenue),
+        targetConversion: Number(row.target_conversion),
+        chatCount: row.chat_count,
+      }));
+      
+      setTargets(mapped);
+    } catch (err) {
+      console.error('Exception fetching targets:', err);
     }
-    
-    const mapped: GuideTarget[] = (data || []).map((row) => ({
-      id: row.id,
-      name: row.name,
-      targetOrders: row.target_orders,
-      targetRevenue: Number(row.target_revenue),
-      targetConversion: Number(row.target_conversion),
-      chatCount: row.chat_count,
-    }));
-    
-    setTargets(mapped);
   };
 
   // Fetch formulas from database
   const fetchFormulas = async () => {
-    const { data, error } = await supabase
-      .from('formula_overrides')
-      .select('*')
-      .order('name');
-    
-    if (error) {
-      console.error('Error fetching formulas:', error);
-      return;
+    try {
+      const { data, error } = await supabase
+        .from('formula_overrides')
+        .select('*')
+        .order('name');
+      
+      if (error) {
+        console.error('Error fetching formulas:', error);
+        return;
+      }
+      
+      const mapped: FormulaOverride[] = (data || []).map((row) => ({
+        id: row.id,
+        name: row.name,
+        formula: row.formula,
+        enabled: row.enabled,
+      }));
+      
+      setFormulas(mapped);
+    } catch (err) {
+      console.error('Exception fetching formulas:', err);
     }
-    
-    const mapped: FormulaOverride[] = (data || []).map((row) => ({
-      id: row.id,
-      name: row.name,
-      formula: row.formula,
-      enabled: row.enabled,
-    }));
-    
-    setFormulas(mapped);
   };
 
   // Save targets to database
@@ -162,8 +170,13 @@ export function useGuideTargets() {
   useEffect(() => {
     const loadData = async () => {
       setIsLoading(true);
-      await Promise.all([fetchTargets(), fetchFormulas()]);
-      setIsLoading(false);
+      try {
+        await Promise.all([fetchTargets(), fetchFormulas()]);
+      } catch (err) {
+        console.error('Error loading data:', err);
+      } finally {
+        setIsLoading(false);
+      }
     };
     loadData();
   }, []);
