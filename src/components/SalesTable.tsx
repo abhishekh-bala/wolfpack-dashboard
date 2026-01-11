@@ -20,7 +20,6 @@ interface ComputedData extends SalesData {
   currentConversion: number;
   targetConversion: number;
   ordersToTarget: number;
-  nrpc: number;
   isFromFile: boolean;
   hasChatData: boolean;
 }
@@ -28,9 +27,10 @@ interface ComputedData extends SalesData {
 interface SalesTableProps {
   salesData: SalesData[];
   targets: GuideTarget[];
+  compact?: boolean;
 }
 
-export function SalesTable({ salesData, targets }: SalesTableProps) {
+export function SalesTable({ salesData, targets, compact = false }: SalesTableProps) {
   const computedData = useMemo(() => {
     const dataMap = new Map<string, SalesData>();
     
@@ -58,10 +58,9 @@ export function SalesTable({ salesData, targets }: SalesTableProps) {
       const revenueDeficit = target.targetRevenue - newRevenue;
       const orderDeficit = target.targetOrders - orders;
       const currentConversion = hasChatData ? (orders / chatCount) * 100 : 0;
-      const ordersToTarget = hasChatData
+      const ordersToTarget = hasChatData 
         ? Math.max(0, Math.ceil((target.targetConversion / 100) * chatCount - orders))
         : 0;
-      const nrpc = hasChatData ? newRevenue / chatCount : 0;
 
       result.push({
         name: target.name,
@@ -77,7 +76,6 @@ export function SalesTable({ salesData, targets }: SalesTableProps) {
         currentConversion,
         targetConversion: target.targetConversion,
         ordersToTarget,
-        nrpc,
         isFromFile: !!sales,
         hasChatData,
       });
@@ -97,7 +95,6 @@ export function SalesTable({ salesData, targets }: SalesTableProps) {
           currentConversion: 0,
           targetConversion: 0,
           ordersToTarget: 0,
-          nrpc: 0,
           isFromFile: true,
           hasChatData: false,
         });
@@ -111,9 +108,9 @@ export function SalesTable({ salesData, targets }: SalesTableProps) {
   const DeficitCell = ({ value, isCurrency = false }: { value: number; isCurrency?: boolean }) => {
     const isPositive = value <= 0;
     const displayValue = isCurrency ? formatCurrency(Math.abs(value)) : Math.abs(value);
-
+    
     return (
-      <div className={`flex items-center justify-end gap-1 font-mono text-sm ${isPositive ? 'text-success' : 'text-destructive'}`}>
+      <div className={`flex items-center justify-end gap-1 font-mono ${compact ? 'text-xs' : 'text-sm'} ${isPositive ? 'text-success' : 'text-destructive'}`}>
         {value === 0 ? (
           <Minus className="w-3 h-3" />
         ) : isPositive ? (
@@ -138,21 +135,20 @@ export function SalesTable({ salesData, targets }: SalesTableProps) {
   return (
     <div className="glass-card overflow-hidden">
       <div className="overflow-x-auto">
-        <Table>
+        <Table className={compact ? 'text-xs' : ''}>
           <TableHeader>
             <TableRow className="bg-gradient-to-r from-muted/50 via-muted/30 to-muted/50 hover:bg-muted/50">
-              <TableHead className="text-foreground font-bold">Name</TableHead>
-              <TableHead className="text-foreground font-bold text-center">Orders</TableHead>
-              <TableHead className="text-foreground font-bold text-right">New Revenue</TableHead>
-              <TableHead className="text-foreground font-bold text-right">Target Rev</TableHead>
-              <TableHead className="text-foreground font-bold text-right">Rev Deficit</TableHead>
-              <TableHead className="text-foreground font-bold text-center">Target Ord</TableHead>
-              <TableHead className="text-foreground font-bold text-center">Ord Deficit</TableHead>
-              <TableHead className="text-foreground font-bold text-center">Chats</TableHead>
-              <TableHead className="text-foreground font-bold text-center">Conv %</TableHead>
-              <TableHead className="text-foreground font-bold text-center">Target %</TableHead>
-              <TableHead className="text-foreground font-bold text-center">Need</TableHead>
-              <TableHead className="text-foreground font-bold text-right">NRPC</TableHead>
+              <TableHead className={`text-foreground font-bold ${compact ? 'py-2' : ''}`}>Name</TableHead>
+              <TableHead className={`text-foreground font-bold text-center ${compact ? 'py-2' : ''}`}>Orders</TableHead>
+              <TableHead className={`text-foreground font-bold text-right ${compact ? 'py-2' : ''}`}>New Revenue</TableHead>
+              <TableHead className={`text-foreground font-bold text-right ${compact ? 'py-2' : ''}`}>Target Rev</TableHead>
+              <TableHead className={`text-foreground font-bold text-right ${compact ? 'py-2' : ''}`}>Rev Deficit</TableHead>
+              <TableHead className={`text-foreground font-bold text-center ${compact ? 'py-2' : ''}`}>Target Ord</TableHead>
+              <TableHead className={`text-foreground font-bold text-center ${compact ? 'py-2' : ''}`}>Ord Deficit</TableHead>
+              <TableHead className={`text-foreground font-bold text-center ${compact ? 'py-2' : ''}`}>Chats</TableHead>
+              <TableHead className={`text-foreground font-bold text-center ${compact ? 'py-2' : ''}`}>Conv %</TableHead>
+              <TableHead className={`text-foreground font-bold text-center ${compact ? 'py-2' : ''}`}>Target %</TableHead>
+              <TableHead className={`text-foreground font-bold text-center ${compact ? 'py-2' : ''}`}>Need</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -160,55 +156,50 @@ export function SalesTable({ salesData, targets }: SalesTableProps) {
               // Determine row status for styling
               const isExceedingTargets = row.revenueDeficit <= 0 && row.orderDeficit <= 0 && row.targetRevenue > 0;
               
-              const revenueProgress = row.targetRevenue > 0 ? (row.newRevenue / row.targetRevenue) * 100 : 0;
-              const orderProgress = row.targetOrders > 0 ? (row.orders / row.targetOrders) * 100 : 0;
-
-              let rowColorClass = '';
-              if (isExceedingTargets) {
-                rowColorClass = 'bg-gradient-to-r from-success/10 via-success/5 to-transparent';
-              } else if (revenueProgress > 75 || orderProgress > 75) {
-                rowColorClass = 'bg-gradient-to-r from-primary/10 via-primary/5 to-transparent';
-              } else if (revenueProgress > 50 || orderProgress > 50) {
-                rowColorClass = 'bg-gradient-to-r from-accent/10 via-accent/5 to-transparent';
-              } else if (row.targetRevenue > 0) {
-                rowColorClass = 'bg-gradient-to-r from-warning/10 via-warning/5 to-transparent';
-              }
-
               return (
                 <TableRow
                   key={row.name}
                   className={`
                     animate-fade-in border-b border-border/50
-                    ${rowColorClass}
-                    hover:bg-primary/10 transition-all duration-300
+                    ${!row.isFromFile ? 'bg-warning/5' : ''}
+                    ${isExceedingTargets ? 'bg-success/5' : ''}
+                    ${index % 2 === 0 ? 'bg-muted/10' : ''}
+                    hover:bg-primary/5 transition-colors
                   `}
                   style={{ animationDelay: `${index * 30}ms` }}
                 >
-                  <TableCell className="font-medium">
-                    <span className={`${isExceedingTargets ? 'text-success font-semibold' : ''}`}>{row.name}</span>
+                  <TableCell className={`font-medium ${compact ? 'py-1.5' : ''}`}>
+                    <div className="flex items-center gap-2">
+                      <span className={`${isExceedingTargets ? 'text-success' : ''}`}>{row.name}</span>
+                      {!row.isFromFile && (
+                        <span className="text-[10px] px-1.5 py-0.5 rounded bg-warning/20 text-warning font-medium">
+                          No File Data
+                        </span>
+                      )}
+                    </div>
                   </TableCell>
-                  <TableCell className="text-center font-mono">
+                  <TableCell className={`text-center font-mono ${compact ? 'py-1.5' : ''}`}>
                     <span className="inline-flex items-center justify-center min-w-[2rem] px-2 py-0.5 rounded bg-muted/50">
                       {row.orders}
                     </span>
                   </TableCell>
-                  <TableCell className="text-right font-mono">
+                  <TableCell className={`text-right font-mono ${compact ? 'py-1.5' : ''}`}>
                     <span className="text-primary font-semibold">{formatCurrency(row.newRevenue)}</span>
                   </TableCell>
-                  <TableCell className="text-right font-mono text-muted-foreground">
+                  <TableCell className={`text-right font-mono text-muted-foreground ${compact ? 'py-1.5' : ''}`}>
                     {row.targetRevenue > 0 ? formatCurrency(row.targetRevenue) : '-'}
                   </TableCell>
-                  <TableCell className="text-right">
+                  <TableCell className={`text-right ${compact ? 'py-1.5' : ''}`}>
                     {row.targetRevenue > 0 ? (
                       <DeficitCell value={row.revenueDeficit} isCurrency />
                     ) : (
                       <span className="text-muted-foreground">-</span>
                     )}
                   </TableCell>
-                  <TableCell className="text-center font-mono text-muted-foreground">
+                  <TableCell className={`text-center font-mono text-muted-foreground ${compact ? 'py-1.5' : ''}`}>
                     {row.targetOrders > 0 ? row.targetOrders : '-'}
                   </TableCell>
-                  <TableCell className="text-center">
+                  <TableCell className={`text-center ${compact ? 'py-1.5' : ''}`}>
                     {row.targetOrders > 0 ? (
                       <div className="flex justify-center">
                         <DeficitCell value={row.orderDeficit} />
@@ -217,39 +208,32 @@ export function SalesTable({ salesData, targets }: SalesTableProps) {
                       <span className="text-muted-foreground">-</span>
                     )}
                   </TableCell>
-                  <TableCell className="text-center font-mono">
+                  <TableCell className={`text-center font-mono ${compact ? 'py-1.5' : ''}`}>
                     {row.hasChatData ? (
-                      <span className="inline-flex items-center justify-center min-w-[2rem] px-2 py-0.5 rounded bg-accent/20 text-accent font-semibold">
+                      <span className="inline-flex items-center justify-center min-w-[2rem] px-2 py-0.5 rounded bg-accent/20 text-accent">
                         {row.chatCount}
                       </span>
                     ) : (
                       <span className="text-muted-foreground text-xs">No Data</span>
                     )}
                   </TableCell>
-                  <TableCell className="text-center font-mono">
+                  <TableCell className={`text-center font-mono ${compact ? 'py-1.5' : ''}`}>
                     {row.hasChatData ? (
-                      <span className={`font-semibold ${row.currentConversion >= row.targetConversion ? 'text-success' : row.currentConversion >= row.targetConversion * 0.75 ? 'text-primary' : 'text-warning'}`}>
+                      <span className={row.currentConversion >= row.targetConversion ? 'text-success' : 'text-foreground'}>
                         {formatPercent(row.currentConversion)}
                       </span>
                     ) : (
                       <span className="text-muted-foreground">-</span>
                     )}
                   </TableCell>
-                  <TableCell className="text-center font-mono text-muted-foreground">
+                  <TableCell className={`text-center font-mono text-muted-foreground ${compact ? 'py-1.5' : ''}`}>
                     {row.targetConversion > 0 ? formatPercent(row.targetConversion) : '-'}
                   </TableCell>
-                  <TableCell className="text-center">
+                  <TableCell className={`text-center ${compact ? 'py-1.5' : ''}`}>
                     {row.targetConversion > 0 && row.hasChatData ? (
                       <span className={`font-mono font-semibold ${row.ordersToTarget > 0 ? 'text-warning' : 'text-success'}`}>
                         {row.ordersToTarget}
                       </span>
-                    ) : (
-                      <span className="text-muted-foreground">-</span>
-                    )}
-                  </TableCell>
-                  <TableCell className="text-right font-mono">
-                    {row.hasChatData ? (
-                      <span className="text-accent font-semibold">{formatCurrency(row.nrpc)}</span>
                     ) : (
                       <span className="text-muted-foreground">-</span>
                     )}
