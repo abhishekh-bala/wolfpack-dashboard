@@ -7,6 +7,7 @@ interface StatCardProps {
   icon: LucideIcon;
   variant?: 'default' | 'success' | 'warning' | 'danger';
   compact?: boolean;
+  isFullscreen?: boolean;
 }
 
 export function StatCard({ 
@@ -15,15 +16,9 @@ export function StatCard({
   subtitle, 
   icon: Icon, 
   variant = 'default',
-  compact = false 
+  compact = false,
+  isFullscreen = false
 }: StatCardProps) {
-  const gradientClasses = {
-    default: 'gradient-primary',
-    success: 'gradient-success',
-    warning: 'bg-warning',
-    danger: 'gradient-danger',
-  };
-
   const iconBgClasses = {
     default: 'bg-primary/20 text-primary',
     success: 'bg-success/20 text-success',
@@ -31,17 +26,30 @@ export function StatCard({
     danger: 'bg-destructive/20 text-destructive',
   };
 
+  const fullscreenValueClasses = {
+    default: 'text-primary',
+    success: 'text-success',
+    warning: 'text-warning',
+    danger: 'text-destructive',
+  };
+
   return (
-    <div className={`stat-card group hover:border-primary/30 transition-all duration-300 ${compact ? 'p-3' : ''}`}>
+    <div className={`stat-card group hover:border-primary/30 transition-all duration-300 ${compact ? 'p-3' : ''} ${
+      isFullscreen ? 'bg-[hsl(220,20%,8%)]/90 border-[hsl(220,15%,25%)] hover:border-primary/50' : ''
+    }`}>
       <div className="flex items-start justify-between">
         <div className="flex-1">
           <p className={`text-muted-foreground font-medium ${compact ? 'text-xs' : 'text-sm'}`}>{title}</p>
-          <p className={`font-bold text-foreground ${compact ? 'text-xl mt-0.5' : 'text-3xl mt-1'}`}>{value}</p>
+          <p className={`font-bold ${compact ? 'text-xl mt-0.5' : 'text-3xl mt-1'} ${
+            isFullscreen ? fullscreenValueClasses[variant] : 'text-foreground'
+          }`}>{value}</p>
           {subtitle && (
             <p className={`text-muted-foreground ${compact ? 'text-[10px] mt-0.5' : 'text-xs mt-1'}`}>{subtitle}</p>
           )}
         </div>
-        <div className={`${compact ? 'w-8 h-8' : 'w-10 h-10'} rounded-lg ${iconBgClasses[variant]} flex items-center justify-center group-hover:scale-110 transition-transform`}>
+        <div className={`${compact ? 'w-8 h-8' : 'w-10 h-10'} rounded-lg ${iconBgClasses[variant]} flex items-center justify-center group-hover:scale-110 transition-transform ${
+          isFullscreen ? 'opacity-80' : ''
+        }`}>
           <Icon className={compact ? 'w-4 h-4' : 'w-5 h-5'} />
         </div>
       </div>
