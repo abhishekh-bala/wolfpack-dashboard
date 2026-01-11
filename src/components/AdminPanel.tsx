@@ -12,6 +12,7 @@ import {
   Settings2,
   Users,
   Calculator,
+  MessageSquare,
   Loader2
 } from 'lucide-react';
 import {
@@ -112,6 +113,14 @@ export function AdminPanel({
     );
   };
 
+  const handleChatCountChange = (name: string, value: number) => {
+    setLocalTargets(
+      localTargets.map((t) =>
+        t.name === name ? { ...t, chatCount: value } : t
+      )
+    );
+  };
+
   const handleSaveTargets = async () => {
     setIsSaving(true);
     await onSaveTargets(localTargets);
@@ -158,10 +167,14 @@ export function AdminPanel({
         </DialogHeader>
 
         <Tabs defaultValue="guides" className="flex-1 overflow-hidden flex flex-col">
-          <TabsList className="grid w-full grid-cols-2 bg-muted">
+          <TabsList className="grid w-full grid-cols-3 bg-muted">
             <TabsTrigger value="guides" className="gap-2">
               <Users className="w-4 h-4" />
               Guides & Targets
+            </TabsTrigger>
+            <TabsTrigger value="chats" className="gap-2">
+              <MessageSquare className="w-4 h-4" />
+              Chat Counts
             </TabsTrigger>
             <TabsTrigger value="formulas" className="gap-2">
               <Calculator className="w-4 h-4" />
@@ -208,7 +221,7 @@ export function AdminPanel({
                         <Trash2 className="w-4 h-4" />
                       </Button>
                     </div>
-                    <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                    <div className="grid grid-cols-3 gap-3">
                       <div>
                         <Label className="text-xs text-muted-foreground">Target Orders</Label>
                         <Input
@@ -244,17 +257,6 @@ export function AdminPanel({
                           className="input-dark mt-1"
                         />
                       </div>
-                      <div>
-                        <Label className="text-xs text-muted-foreground">Chat Count</Label>
-                        <Input
-                          type="number"
-                          value={target.chatCount}
-                          onChange={(e) =>
-                            handleTargetChange(target.name, 'chatCount', Number(e.target.value))
-                          }
-                          className="input-dark mt-1"
-                        />
-                      </div>
                     </div>
                   </div>
                 ))
@@ -269,6 +271,53 @@ export function AdminPanel({
               >
                 {isSaving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
                 Save All Targets
+              </Button>
+            </div>
+          </TabsContent>
+
+          <TabsContent value="chats" className="flex-1 overflow-hidden flex flex-col mt-4">
+            <p className="text-sm text-muted-foreground mb-4">
+              Quickly update chat counts for each guide. This updates daily based on chat performance.
+            </p>
+
+            {/* Chat counts list */}
+            <div className="flex-1 overflow-auto pr-2">
+              {localTargets.length === 0 ? (
+                <div className="text-center py-8 text-muted-foreground">
+                  No guides added yet. Add guides in the "Guides & Targets" tab first.
+                </div>
+              ) : (
+                <div className="grid grid-cols-2 gap-3">
+                  {localTargets.map((target) => (
+                    <div
+                      key={target.name}
+                      className="glass-card p-3 animate-fade-in flex items-center justify-between gap-4"
+                    >
+                      <div className="flex items-center gap-2 flex-1 min-w-0">
+                        <MessageSquare className="w-4 h-4 text-accent flex-shrink-0" />
+                        <span className="font-medium text-foreground truncate">{target.name}</span>
+                      </div>
+                      <Input
+                        type="number"
+                        value={target.chatCount}
+                        onChange={(e) => handleChatCountChange(target.name, Number(e.target.value))}
+                        className="input-dark w-24 text-center"
+                        placeholder="0"
+                      />
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+
+            <div className="flex justify-end gap-2 pt-4 border-t border-border mt-4">
+              <Button 
+                onClick={handleSaveTargets} 
+                className="gap-2 gradient-primary"
+                disabled={isSaving || localTargets.length === 0}
+              >
+                {isSaving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
+                Save Chat Counts
               </Button>
             </div>
           </TabsContent>
