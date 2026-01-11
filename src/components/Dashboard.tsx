@@ -30,7 +30,7 @@ interface DashboardProps {
 export function Dashboard({ onLogout }: DashboardProps) {
   const [parsedData, setParsedData] = useState<ParsedMhtmlData | null>(null);
   const [isProcessing, setIsProcessing] = useState(false);
-  const [compactMode, setCompactMode] = useState(false);
+  const [fullscreenMode, setFullscreenMode] = useState(false);
   const { toast } = useToast();
   
   const { 
@@ -91,8 +91,67 @@ export function Dashboard({ onLogout }: DashboardProps) {
     );
   }
 
+  // Fullscreen Mode View
+  if (fullscreenMode && parsedData) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-background via-secondary/20 to-background p-8 flex flex-col">
+        <div className="flex justify-end mb-6">
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => setFullscreenMode(false)}
+            className="gap-2 border-primary/30 hover:border-primary"
+          >
+            <Maximize2 className="w-4 h-4" />
+            Exit Fullscreen
+          </Button>
+        </div>
+
+        <div className="flex-1 flex flex-col justify-center">
+          <div className="text-center mb-12">
+            <h1 className="text-6xl font-bold text-gradient mb-4">Team WolfPack</h1>
+            <p className="text-2xl text-muted-foreground">Sales Performance Metrics</p>
+            {parsedData.dateRange && (
+              <p className="text-lg text-accent mt-2">{parsedData.dateRange}</p>
+            )}
+          </div>
+
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-8 max-w-7xl mx-auto w-full">
+            <div className="glass-card p-8 text-center gradient-success">
+              <DollarSign className="w-16 h-16 mx-auto mb-4 text-success" />
+              <p className="text-sm font-medium text-muted-foreground mb-2">Total Revenue</p>
+              <p className="text-5xl font-bold text-success-foreground">{formatCurrency(parsedData.summary.totalSales)}</p>
+              <p className="text-sm text-muted-foreground mt-2">All sales combined</p>
+            </div>
+
+            <div className="glass-card p-8 text-center bg-gradient-to-br from-primary/20 to-accent/20">
+              <ShoppingCart className="w-16 h-16 mx-auto mb-4 text-primary" />
+              <p className="text-sm font-medium text-muted-foreground mb-2">Total Orders</p>
+              <p className="text-5xl font-bold text-foreground">{parsedData.summary.totalOrders}</p>
+              <p className="text-sm text-accent mt-2">Avg: {formatCurrency(parsedData.summary.avgOrderSize)}</p>
+            </div>
+
+            <div className="glass-card p-8 text-center bg-gradient-to-br from-accent/20 to-primary/20">
+              <TrendingUp className="w-16 h-16 mx-auto mb-4 text-accent" />
+              <p className="text-sm font-medium text-muted-foreground mb-2">New Revenue</p>
+              <p className="text-5xl font-bold text-foreground">{formatCurrency(parsedData.summary.newSales)}</p>
+              <p className="text-sm text-primary mt-2">{parsedData.summary.newOrders} new orders</p>
+            </div>
+
+            <div className="glass-card p-8 text-center bg-gradient-to-br from-warning/20 to-success/20">
+              <Users className="w-16 h-16 mx-auto mb-4 text-warning" />
+              <p className="text-sm font-medium text-muted-foreground mb-2">Team Size</p>
+              <p className="text-5xl font-bold text-foreground">{targets.length}</p>
+              <p className="text-sm text-success mt-2">{formatCurrency(parsedData.summary.salesPerRep)} per rep</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   return (
-    <div className={`min-h-screen bg-background ${compactMode ? 'text-sm' : ''}`}>
+    <div className="min-h-screen bg-background">
       {/* Header */}
       <header className="border-b border-border bg-gradient-to-r from-card/95 via-card/80 to-card/95 backdrop-blur-xl sticky top-0 z-50">
         <div className="container mx-auto px-4 py-3">
@@ -111,20 +170,22 @@ export function Dashboard({ onLogout }: DashboardProps) {
             </div>
 
             <div className="flex items-center gap-4">
-              {/* Compact Mode Toggle */}
-              <div className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-muted/50">
-                <Maximize2 className="w-4 h-4 text-muted-foreground" />
-                <Label htmlFor="compact-mode" className="text-xs text-muted-foreground cursor-pointer">
-                  Compact
-                </Label>
-                <Switch
-                  id="compact-mode"
-                  checked={compactMode}
-                  onCheckedChange={setCompactMode}
-                />
-              </div>
-              
-              <AdminPanel 
+              {/* Fullscreen Mode Toggle */}
+              {parsedData && (
+                <div className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-muted/50">
+                  <Maximize2 className="w-4 h-4 text-muted-foreground" />
+                  <Label htmlFor="fullscreen-mode" className="text-xs text-muted-foreground cursor-pointer">
+                    Fullscreen
+                  </Label>
+                  <Switch
+                    id="fullscreen-mode"
+                    checked={fullscreenMode}
+                    onCheckedChange={setFullscreenMode}
+                  />
+                </div>
+              )}
+
+              <AdminPanel
                 targets={targets}
                 formulas={formulas}
                 onSaveTargets={saveTargets}
@@ -145,9 +206,9 @@ export function Dashboard({ onLogout }: DashboardProps) {
         </div>
       </header>
 
-      <main className={`container mx-auto px-4 ${compactMode ? 'py-3 space-y-3' : 'py-6 space-y-6'}`}>
+      <main className="container mx-auto px-4 py-6 space-y-6">
         {/* File Upload Section */}
-        <section className={`glass-card ${compactMode ? 'p-4' : 'p-6'}`}>
+        <section className="glass-card p-6">
           <div className="flex items-center justify-between mb-4">
             <div className="flex items-center gap-3">
               <div className="w-8 h-8 rounded-lg bg-primary/20 flex items-center justify-center">
@@ -188,21 +249,19 @@ export function Dashboard({ onLogout }: DashboardProps) {
                   </div>
                 )}
               </div>
-              <div className={`grid ${compactMode ? 'grid-cols-4 gap-3' : 'grid-cols-2 md:grid-cols-4 gap-4'}`}>
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                 <StatCard
                   title="Total Revenue"
                   value={formatCurrency(parsedData.summary.totalSales)}
                   subtitle="All sales combined"
                   icon={DollarSign}
                   variant="success"
-                  compact={compactMode}
                 />
                 <StatCard
                   title="Total Orders"
                   value={parsedData.summary.totalOrders.toString()}
                   subtitle={`Avg: ${formatCurrency(parsedData.summary.avgOrderSize)}`}
                   icon={ShoppingCart}
-                  compact={compactMode}
                 />
                 <StatCard
                   title="New Revenue"
@@ -210,14 +269,12 @@ export function Dashboard({ onLogout }: DashboardProps) {
                   subtitle={`${parsedData.summary.newOrders} new orders`}
                   icon={TrendingUp}
                   variant="default"
-                  compact={compactMode}
                 />
                 <StatCard
                   title="Team Size"
-                  value={parsedData.salesData.length.toString()}
+                  value={targets.length.toString()}
                   subtitle={`${formatCurrency(parsedData.summary.salesPerRep)} per rep`}
                   icon={Users}
-                  compact={compactMode}
                 />
               </div>
             </section>
@@ -230,7 +287,7 @@ export function Dashboard({ onLogout }: DashboardProps) {
                 </div>
                 <h2 className="text-lg font-semibold text-foreground">Performance Details</h2>
               </div>
-              <SalesTable salesData={parsedData.salesData} targets={targets} compact={compactMode} />
+              <SalesTable salesData={parsedData.salesData} targets={targets} />
             </section>
           </>
         )}
@@ -246,13 +303,13 @@ export function Dashboard({ onLogout }: DashboardProps) {
                 Configured Guides ({targets.length})
               </h2>
             </div>
-            <SalesTable salesData={[]} targets={targets} compact={compactMode} />
+            <SalesTable salesData={[]} targets={targets} />
           </section>
         )}
       </main>
 
       {/* Footer */}
-      <footer className={`border-t border-border ${compactMode ? 'mt-6 py-3' : 'mt-12 py-6'}`}>
+      <footer className="border-t border-border mt-12 py-6">
         <div className="container mx-auto px-4 text-center text-sm text-muted-foreground">
           <span className="text-gradient font-semibold">Team WolfPack</span> Sales Dashboard • {new Date().getFullYear()}
         </div>

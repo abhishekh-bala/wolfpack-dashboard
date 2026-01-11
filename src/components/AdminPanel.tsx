@@ -158,10 +158,14 @@ export function AdminPanel({
         </DialogHeader>
 
         <Tabs defaultValue="guides" className="flex-1 overflow-hidden flex flex-col">
-          <TabsList className="grid w-full grid-cols-2 bg-muted">
+          <TabsList className="grid w-full grid-cols-3 bg-muted">
             <TabsTrigger value="guides" className="gap-2">
               <Users className="w-4 h-4" />
               Guides & Targets
+            </TabsTrigger>
+            <TabsTrigger value="chats" className="gap-2">
+              <Users className="w-4 h-4" />
+              Update Chats
             </TabsTrigger>
             <TabsTrigger value="formulas" className="gap-2">
               <Calculator className="w-4 h-4" />
@@ -269,6 +273,56 @@ export function AdminPanel({
               >
                 {isSaving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
                 Save All Targets
+              </Button>
+            </div>
+          </TabsContent>
+
+          <TabsContent value="chats" className="flex-1 overflow-hidden flex flex-col mt-4">
+            <p className="text-sm text-muted-foreground mb-4">
+              Quickly update chat counts for all guides. This is useful for tracking conversation metrics.
+            </p>
+
+            <div className="flex-1 overflow-auto space-y-3 pr-2">
+              {localTargets.length === 0 ? (
+                <div className="text-center py-8 text-muted-foreground">
+                  No guides available. Add guides first to update their chat counts.
+                </div>
+              ) : (
+                localTargets.map((target) => (
+                  <div
+                    key={target.name}
+                    className="glass-card p-4 animate-fade-in flex items-center justify-between"
+                  >
+                    <div className="flex-1">
+                      <h4 className="font-semibold text-foreground mb-1">{target.name}</h4>
+                      <p className="text-xs text-muted-foreground">
+                        Current chat count: {target.chatCount}
+                      </p>
+                    </div>
+                    <div className="w-32">
+                      <Input
+                        type="number"
+                        value={target.chatCount}
+                        onChange={(e) =>
+                          handleTargetChange(target.name, 'chatCount', Number(e.target.value))
+                        }
+                        className="input-dark"
+                        placeholder="Chat count"
+                      />
+                    </div>
+                  </div>
+                ))
+              )}
+            </div>
+
+            <div className="flex justify-end gap-2 pt-4 border-t border-border mt-4">
+              <Button
+                onClick={handleSaveTargets}
+                className="gap-2 gradient-primary"
+                disabled={isSaving}
+              >
+                {isSaving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
+                Save Chat Updates
               </Button>
             </div>
           </TabsContent>
