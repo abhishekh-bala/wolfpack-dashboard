@@ -5,10 +5,16 @@ import { useToast } from '@/hooks/use-toast';
 export interface GuideTarget {
   id?: string;
   name: string;
+  // Daily targets
   targetOrders: number;
   targetRevenue: number;
   targetConversion: number;
   chatCount: number;
+  // Monthly targets
+  monthlyTargetOrders: number;
+  monthlyTargetRevenue: number;
+  monthlyTargetConversion: number;
+  monthlyChatCount: number;
 }
 
 export interface FormulaOverride {
@@ -30,12 +36,12 @@ export function useGuideTargets() {
       .from('guide_targets')
       .select('*')
       .order('name');
-    
+
     if (error) {
       console.error('Error fetching targets:', error);
       return;
     }
-    
+
     const mapped: GuideTarget[] = (data || []).map((row) => ({
       id: row.id,
       name: row.name,
@@ -43,8 +49,12 @@ export function useGuideTargets() {
       targetRevenue: Number(row.target_revenue),
       targetConversion: Number(row.target_conversion),
       chatCount: row.chat_count,
+      monthlyTargetOrders: row.monthly_target_orders ?? 0,
+      monthlyTargetRevenue: Number(row.monthly_target_revenue ?? 0),
+      monthlyTargetConversion: Number(row.monthly_target_conversion ?? 0),
+      monthlyChatCount: row.monthly_chat_count ?? 0,
     }));
-    
+
     setTargets(mapped);
   };
 
@@ -54,19 +64,19 @@ export function useGuideTargets() {
       .from('formula_overrides')
       .select('*')
       .order('name');
-    
+
     if (error) {
       console.error('Error fetching formulas:', error);
       return;
     }
-    
+
     const mapped: FormulaOverride[] = (data || []).map((row) => ({
       id: row.id,
       name: row.name,
       formula: row.formula,
       enabled: row.enabled,
     }));
-    
+
     setFormulas(mapped);
   };
 
@@ -75,11 +85,11 @@ export function useGuideTargets() {
     try {
       // Get existing targets to determine which to delete
       const { data: existing } = await supabase.from('guide_targets').select('name');
-      const existingNames = new Set((existing || []).map(r => r.name.toLowerCase()));
-      const newNames = new Set(newTargets.map(t => t.name.toLowerCase()));
-      
+      const existingNames = new Set((existing || []).map((r) => r.name.toLowerCase()));
+      const newNames = new Set(newTargets.map((t) => t.name.toLowerCase()));
+
       // Delete removed targets
-      const toDelete = [...existingNames].filter(n => !newNames.has(n));
+      const toDelete = [...existingNames].filter((n) => !newNames.has(n));
       if (toDelete.length > 0) {
         for (const name of toDelete) {
           await supabase.from('guide_targets').delete().ilike('name', name);
@@ -88,16 +98,21 @@ export function useGuideTargets() {
 
       // Upsert all targets
       for (const target of newTargets) {
-        const { error } = await supabase
-          .from('guide_targets')
-          .upsert({
+        const { error } = await supabase.from('guide_targets').upsert(
+          {
             name: target.name,
             target_orders: target.targetOrders,
             target_revenue: target.targetRevenue,
             target_conversion: target.targetConversion,
             chat_count: target.chatCount,
-          }, { onConflict: 'name' });
-        
+            monthly_target_orders: target.monthlyTargetOrders,
+            monthly_target_revenue: target.monthlyTargetRevenue,
+            monthly_target_conversion: target.monthlyTargetConversion,
+            monthly_chat_count: target.monthlyChatCount,
+          },
+          { onConflict: 'name' }
+        );
+
         if (error) throw error;
       }
 
@@ -120,15 +135,16 @@ export function useGuideTargets() {
   const saveFormulas = async (newFormulas: FormulaOverride[]) => {
     try {
       for (const formula of newFormulas) {
-        const { error } = await supabase
-          .from('formula_overrides')
-          .upsert({
+        const { error } = await supabase.from('formula_overrides').upsert(
+          {
             id: formula.id,
             name: formula.name,
             formula: formula.formula,
             enabled: formula.enabled,
-          }, { onConflict: 'id' });
-        
+          },
+          { onConflict: 'id' }
+        );
+
         if (error) throw error;
       }
 
@@ -155,7 +171,7 @@ export function useGuideTargets() {
       { id: 'current_conversion', name: 'Current Conversion', formula: '(orders / chatCount) * 100', enabled: true },
       { id: 'orders_to_target', name: 'Orders to Reach Target Conversion', formula: 'Math.ceil((targetConversion / 100) * chatCount - orders)', enabled: true },
     ];
-    
+
     await saveFormulas(defaults);
   };
 
@@ -179,3 +195,4 @@ export function useGuideTargets() {
     refetchFormulas: fetchFormulas,
   };
 }
+

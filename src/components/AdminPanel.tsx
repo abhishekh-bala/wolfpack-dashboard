@@ -4,16 +4,18 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
 import { GuideTarget, FormulaOverride } from '@/hooks/useGuideTargets';
-import { 
-  Plus, 
-  Trash2, 
-  Save, 
+import {
+  Plus,
+  Trash2,
+  Save,
   RotateCcw,
   Settings2,
   Users,
   Calculator,
   MessageSquare,
-  Loader2
+  Loader2,
+  CalendarDays,
+  CalendarRange,
 } from 'lucide-react';
 import {
   Dialog,
@@ -31,14 +33,18 @@ interface AdminPanelProps {
   onSaveTargets: (targets: GuideTarget[]) => Promise<void>;
   onSaveFormulas: (formulas: FormulaOverride[]) => Promise<void>;
   onResetFormulas: () => Promise<void>;
+  viewMode: 'day' | 'month';
+  onViewModeChange: (mode: 'day' | 'month') => void;
 }
 
-export function AdminPanel({ 
-  targets, 
-  formulas, 
-  onSaveTargets, 
-  onSaveFormulas, 
-  onResetFormulas 
+export function AdminPanel({
+  targets,
+  formulas,
+  onSaveTargets,
+  onSaveFormulas,
+  onResetFormulas,
+  viewMode,
+  onViewModeChange,
 }: AdminPanelProps) {
   const [localTargets, setLocalTargets] = useState<GuideTarget[]>(targets);
   const [localFormulas, setLocalFormulas] = useState<FormulaOverride[]>(formulas);
@@ -83,6 +89,10 @@ export function AdminPanel({
       targetRevenue: 0,
       targetConversion: 0,
       chatCount: 0,
+      monthlyTargetOrders: 0,
+      monthlyTargetRevenue: 0,
+      monthlyTargetConversion: 0,
+      monthlyChatCount: 0,
     };
 
     setLocalTargets([...localTargets, newTarget]);
@@ -101,24 +111,8 @@ export function AdminPanel({
     });
   };
 
-  const handleTargetChange = (
-    name: string,
-    field: keyof GuideTarget,
-    value: number
-  ) => {
-    setLocalTargets(
-      localTargets.map((t) =>
-        t.name === name ? { ...t, [field]: value } : t
-      )
-    );
-  };
-
-  const handleChatCountChange = (name: string, value: number) => {
-    setLocalTargets(
-      localTargets.map((t) =>
-        t.name === name ? { ...t, chatCount: value } : t
-      )
-    );
+  const handleTargetChange = (name: string, field: keyof GuideTarget, value: number) => {
+    setLocalTargets(localTargets.map((t) => (t.name === name ? { ...t, [field]: value } : t)));
   };
 
   const handleSaveTargets = async () => {
@@ -128,15 +122,11 @@ export function AdminPanel({
   };
 
   const handleFormulaChange = (id: string, formula: string) => {
-    setLocalFormulas(
-      localFormulas.map((f) => (f.id === id ? { ...f, formula } : f))
-    );
+    setLocalFormulas(localFormulas.map((f) => (f.id === id ? { ...f, formula } : f)));
   };
 
   const handleFormulaToggle = (id: string, enabled: boolean) => {
-    setLocalFormulas(
-      localFormulas.map((f) => (f.id === id ? { ...f, enabled } : f))
-    );
+    setLocalFormulas(localFormulas.map((f) => (f.id === id ? { ...f, enabled } : f)));
   };
 
   const handleSaveFormulas = async () => {
@@ -161,20 +151,41 @@ export function AdminPanel({
       </DialogTrigger>
       <DialogContent className="max-w-4xl max-h-[85vh] overflow-hidden flex flex-col bg-card border-border">
         <DialogHeader>
-          <DialogTitle className="text-xl font-bold text-gradient">
-            Admin Configuration
-          </DialogTitle>
+          <div className="flex items-center justify-between">
+            <DialogTitle className="text-xl font-bold text-gradient">Admin Configuration</DialogTitle>
+            {/* Day / Month toggle */}
+            <div className="flex items-center gap-1 bg-muted rounded-lg p-1">
+              <button
+                onClick={() => onViewModeChange('day')}
+                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-medium transition-colors ${
+                  viewMode === 'day' ? 'bg-primary text-primary-foreground' : 'text-muted-foreground hover:text-foreground'
+                }`}
+              >
+                <CalendarDays className="w-3.5 h-3.5" />
+                Day
+              </button>
+              <button
+                onClick={() => onViewModeChange('month')}
+                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-medium transition-colors ${
+                  viewMode === 'month' ? 'bg-primary text-primary-foreground' : 'text-muted-foreground hover:text-foreground'
+                }`}
+              >
+                <CalendarRange className="w-3.5 h-3.5" />
+                Month
+              </button>
+            </div>
+          </div>
         </DialogHeader>
 
         <Tabs defaultValue="guides" className="flex-1 overflow-hidden flex flex-col">
           <TabsList className="grid w-full grid-cols-3 bg-muted">
             <TabsTrigger value="guides" className="gap-2">
               <Users className="w-4 h-4" />
-              Guides & Targets
+              {viewMode === 'day' ? 'Daily Targets' : 'Monthly Targets'}
             </TabsTrigger>
             <TabsTrigger value="chats" className="gap-2">
               <MessageSquare className="w-4 h-4" />
-              Chat Counts
+              {viewMode === 'day' ? 'Daily Chats' : 'Monthly Chats'}
             </TabsTrigger>
             <TabsTrigger value="formulas" className="gap-2">
               <Calculator className="w-4 h-4" />
@@ -182,6 +193,7 @@ export function AdminPanel({
             </TabsTrigger>
           </TabsList>
 
+          {/* Guides & Targets Tab */}
           <TabsContent value="guides" className="flex-1 overflow-hidden flex flex-col mt-4">
             {/* Add new guide */}
             <div className="flex gap-2 mb-4">
@@ -206,10 +218,7 @@ export function AdminPanel({
                 </div>
               ) : (
                 localTargets.map((target) => (
-                  <div
-                    key={target.name}
-                    className="glass-card p-4 animate-fade-in"
-                  >
+                  <div key={target.name} className="glass-card p-4 animate-fade-in">
                     <div className="flex items-center justify-between mb-3">
                       <h4 className="font-semibold text-foreground">{target.name}</h4>
                       <Button
@@ -223,36 +232,54 @@ export function AdminPanel({
                     </div>
                     <div className="grid grid-cols-3 gap-3">
                       <div>
-                        <Label className="text-xs text-muted-foreground">Target Orders</Label>
+                        <Label className="text-xs text-muted-foreground">
+                          {viewMode === 'day' ? 'Target Orders' : 'Monthly Orders'}
+                        </Label>
                         <Input
                           type="number"
-                          value={target.targetOrders}
+                          value={viewMode === 'day' ? target.targetOrders : target.monthlyTargetOrders}
                           onChange={(e) =>
-                            handleTargetChange(target.name, 'targetOrders', Number(e.target.value))
+                            handleTargetChange(
+                              target.name,
+                              viewMode === 'day' ? 'targetOrders' : 'monthlyTargetOrders',
+                              Number(e.target.value)
+                            )
                           }
                           className="input-dark mt-1"
                         />
                       </div>
                       <div>
-                        <Label className="text-xs text-muted-foreground">Target Revenue ($)</Label>
+                        <Label className="text-xs text-muted-foreground">
+                          {viewMode === 'day' ? 'Target Revenue ($)' : 'Monthly Revenue ($)'}
+                        </Label>
                         <Input
                           type="number"
                           step="0.01"
-                          value={target.targetRevenue}
+                          value={viewMode === 'day' ? target.targetRevenue : target.monthlyTargetRevenue}
                           onChange={(e) =>
-                            handleTargetChange(target.name, 'targetRevenue', Number(e.target.value))
+                            handleTargetChange(
+                              target.name,
+                              viewMode === 'day' ? 'targetRevenue' : 'monthlyTargetRevenue',
+                              Number(e.target.value)
+                            )
                           }
                           className="input-dark mt-1"
                         />
                       </div>
                       <div>
-                        <Label className="text-xs text-muted-foreground">Target Conv. (%)</Label>
+                        <Label className="text-xs text-muted-foreground">
+                          {viewMode === 'day' ? 'Target Conv. (%)' : 'Monthly Conv. (%)'}
+                        </Label>
                         <Input
                           type="number"
                           step="0.1"
-                          value={target.targetConversion}
+                          value={viewMode === 'day' ? target.targetConversion : target.monthlyTargetConversion}
                           onChange={(e) =>
-                            handleTargetChange(target.name, 'targetConversion', Number(e.target.value))
+                            handleTargetChange(
+                              target.name,
+                              viewMode === 'day' ? 'targetConversion' : 'monthlyTargetConversion',
+                              Number(e.target.value)
+                            )
                           }
                           className="input-dark mt-1"
                         />
@@ -264,27 +291,23 @@ export function AdminPanel({
             </div>
 
             <div className="flex justify-end gap-2 pt-4 border-t border-border mt-4">
-              <Button 
-                onClick={handleSaveTargets} 
-                className="gap-2 gradient-primary"
-                disabled={isSaving}
-              >
+              <Button onClick={handleSaveTargets} className="gap-2 gradient-primary" disabled={isSaving}>
                 {isSaving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
-                Save All Targets
+                Save {viewMode === 'day' ? 'Daily' : 'Monthly'} Targets
               </Button>
             </div>
           </TabsContent>
 
+          {/* Chat Counts Tab */}
           <TabsContent value="chats" className="flex-1 overflow-hidden flex flex-col mt-4">
             <p className="text-sm text-muted-foreground mb-4">
-              Quickly update chat counts for each guide. This updates daily based on chat performance.
+              Quickly update {viewMode === 'day' ? 'daily' : 'monthly'} chat counts for each guide.
             </p>
 
-            {/* Chat counts list */}
             <div className="flex-1 overflow-auto pr-2">
               {localTargets.length === 0 ? (
                 <div className="text-center py-8 text-muted-foreground">
-                  No guides added yet. Add guides in the "Guides & Targets" tab first.
+                  No guides added yet. Add guides in the "Targets" tab first.
                 </div>
               ) : (
                 <div className="grid grid-cols-2 gap-3">
@@ -299,8 +322,14 @@ export function AdminPanel({
                       </div>
                       <Input
                         type="number"
-                        value={target.chatCount}
-                        onChange={(e) => handleChatCountChange(target.name, Number(e.target.value))}
+                        value={viewMode === 'day' ? target.chatCount : target.monthlyChatCount}
+                        onChange={(e) =>
+                          handleTargetChange(
+                            target.name,
+                            viewMode === 'day' ? 'chatCount' : 'monthlyChatCount',
+                            Number(e.target.value)
+                          )
+                        }
                         className="input-dark w-24 text-center"
                         placeholder="0"
                       />
@@ -311,20 +340,17 @@ export function AdminPanel({
             </div>
 
             <div className="flex justify-end gap-2 pt-4 border-t border-border mt-4">
-              <Button 
-                onClick={handleSaveTargets} 
-                className="gap-2 gradient-primary"
-                disabled={isSaving || localTargets.length === 0}
-              >
+              <Button onClick={handleSaveTargets} className="gap-2 gradient-primary" disabled={isSaving || localTargets.length === 0}>
                 {isSaving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
-                Save Chat Counts
+                Save {viewMode === 'day' ? 'Daily' : 'Monthly'} Chats
               </Button>
             </div>
           </TabsContent>
 
+          {/* Formula Overrides Tab */}
           <TabsContent value="formulas" className="flex-1 overflow-hidden flex flex-col mt-4">
             <p className="text-sm text-muted-foreground mb-4">
-              Override calculation formulas. Use JavaScript expressions with variables: 
+              Override calculation formulas. Use JavaScript expressions with variables:{' '}
               <code className="mx-1 px-1.5 py-0.5 bg-muted rounded text-xs">orders</code>,
               <code className="mx-1 px-1.5 py-0.5 bg-muted rounded text-xs">newRevenue</code>,
               <code className="mx-1 px-1.5 py-0.5 bg-muted rounded text-xs">targetOrders</code>,
@@ -340,9 +366,7 @@ export function AdminPanel({
                     <div className="flex items-center gap-3">
                       <Switch
                         checked={formula.enabled}
-                        onCheckedChange={(checked) =>
-                          handleFormulaToggle(formula.id, checked)
-                        }
+                        onCheckedChange={(checked) => handleFormulaToggle(formula.id, checked)}
                       />
                       <Label className="font-medium text-foreground">{formula.name}</Label>
                     </div>
@@ -358,20 +382,11 @@ export function AdminPanel({
             </div>
 
             <div className="flex justify-end gap-2 pt-4 border-t border-border mt-4">
-              <Button 
-                variant="outline" 
-                onClick={handleResetFormulas} 
-                className="gap-2"
-                disabled={isSaving}
-              >
+              <Button variant="outline" onClick={handleResetFormulas} className="gap-2" disabled={isSaving}>
                 <RotateCcw className="w-4 h-4" />
                 Reset to Defaults
               </Button>
-              <Button 
-                onClick={handleSaveFormulas} 
-                className="gap-2 gradient-primary"
-                disabled={isSaving}
-              >
+              <Button onClick={handleSaveFormulas} className="gap-2 gradient-primary" disabled={isSaving}>
                 {isSaving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
                 Save Formulas
               </Button>
@@ -382,3 +397,4 @@ export function AdminPanel({
     </Dialog>
   );
 }
+
