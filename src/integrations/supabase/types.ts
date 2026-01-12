@@ -46,6 +46,10 @@ export type Database = {
           chat_count: number
           created_at: string
           id: string
+          monthly_chat_count: number
+          monthly_target_conversion: number
+          monthly_target_orders: number
+          monthly_target_revenue: number
           name: string
           target_conversion: number
           target_orders: number
@@ -56,6 +60,10 @@ export type Database = {
           chat_count?: number
           created_at?: string
           id?: string
+          monthly_chat_count?: number
+          monthly_target_conversion?: number
+          monthly_target_orders?: number
+          monthly_target_revenue?: number
           name: string
           target_conversion?: number
           target_orders?: number
@@ -66,6 +74,10 @@ export type Database = {
           chat_count?: number
           created_at?: string
           id?: string
+          monthly_chat_count?: number
+          monthly_target_conversion?: number
+          monthly_target_orders?: number
+          monthly_target_revenue?: number
           name?: string
           target_conversion?: number
           target_orders?: number

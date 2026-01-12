@@ -30,6 +30,7 @@ interface SalesTableProps {
   targets: GuideTarget[];
   compact?: boolean;
   isFullscreen?: boolean;
+  viewMode?: 'day' | 'month';
 }
 
 const isTeamLeaderName = (name: string) => {
@@ -37,7 +38,7 @@ const isTeamLeaderName = (name: string) => {
   return n.includes('abhishekh') && n.includes('dey');
 };
 
-export function SalesTable({ salesData, targets, compact = false, isFullscreen = false }: SalesTableProps) {
+export function SalesTable({ salesData, targets, compact = false, isFullscreen = false, viewMode = 'day' }: SalesTableProps) {
   const computedData = useMemo(() => {
     const dataMap = new Map<string, SalesData>();
 
@@ -58,15 +59,18 @@ export function SalesTable({ salesData, targets, compact = false, isFullscreen =
 
       const orders = sales?.orders ?? 0;
       const newRevenue = sales?.newRevenue ?? 0;
-      const chatCount = target.chatCount;
+      const chatCount = viewMode === 'day' ? target.chatCount : target.monthlyChatCount;
       const hasChatData = chatCount > 0;
+      const targetRevenue = viewMode === 'day' ? target.targetRevenue : target.monthlyTargetRevenue;
+      const targetOrders = viewMode === 'day' ? target.targetOrders : target.monthlyTargetOrders;
+      const targetConversion = viewMode === 'day' ? target.targetConversion : target.monthlyTargetConversion;
 
       // Calculate computed values
-      const revenueDeficit = target.targetRevenue - newRevenue;
-      const orderDeficit = target.targetOrders - orders;
+      const revenueDeficit = targetRevenue - newRevenue;
+      const orderDeficit = targetOrders - orders;
       const currentConversion = hasChatData ? (orders / chatCount) * 100 : 0;
       const ordersToTarget = hasChatData
-        ? Math.max(0, Math.ceil((target.targetConversion / 100) * chatCount - orders))
+        ? Math.max(0, Math.ceil((targetConversion / 100) * chatCount - orders))
         : 0;
       const nrpc = hasChatData ? newRevenue / chatCount : 0;
 
@@ -76,13 +80,13 @@ export function SalesTable({ salesData, targets, compact = false, isFullscreen =
         avgOrderSize: sales?.avgOrderSize ?? 0,
         total: sales?.total ?? 0,
         newRevenue,
-        targetRevenue: target.targetRevenue,
+        targetRevenue,
         revenueDeficit,
-        targetOrders: target.targetOrders,
+        targetOrders,
         orderDeficit,
         chatCount,
         currentConversion,
-        targetConversion: target.targetConversion,
+        targetConversion,
         ordersToTarget,
         isFromFile: !!sales,
         hasChatData,
@@ -113,7 +117,7 @@ export function SalesTable({ salesData, targets, compact = false, isFullscreen =
 
     // Sort by new revenue descending
     return result.sort((a, b) => b.newRevenue - a.newRevenue);
-  }, [salesData, targets]);
+  }, [salesData, targets, viewMode]);
 
   const DeficitCell = ({ value, isCurrency = false }: { value: number; isCurrency?: boolean }) => {
     const isGood = value <= 0;

@@ -3,8 +3,9 @@ import { FileUpload } from './FileUpload';
 import { SalesTable } from './SalesTable';
 import { StatCard } from './StatCard';
 import { AdminPanel } from './AdminPanel';
+import { PerformanceCharts } from './PerformanceCharts';
 import { parseMhtml, ParsedMhtmlData, formatCurrency, formatPercent } from '@/lib/mhtmlParser';
-import { useGuideTargets } from '@/hooks/useGuideTargets';
+import { useGuideTargets, GuideTarget } from '@/hooks/useGuideTargets';
 import { logout } from '@/lib/storage';
 import { useToast } from '@/hooks/use-toast';
 import { Button } from '@/components/ui/button';
@@ -22,6 +23,9 @@ import {
   Percent,
   Hash,
   Coins,
+  CalendarDays,
+  CalendarRange,
+  Users,
 } from 'lucide-react';
 
 interface DashboardProps {
@@ -34,20 +38,24 @@ export function Dashboard({ onLogout }: DashboardProps) {
   const [parsedData, setParsedData] = useState<ParsedMhtmlData | null>(null);
   const [isProcessing, setIsProcessing] = useState(false);
   const [isFullscreen, setIsFullscreen] = useState(false);
+  const [viewMode, setViewMode] = useState<'day' | 'month'>('day');
   const { toast } = useToast();
 
-  const { 
-    targets, 
-    formulas, 
-    isLoading, 
-    saveTargets, 
-    saveFormulas, 
-    resetFormulas 
+  const {
+    targets,
+    formulas,
+    isLoading,
+    saveTargets,
+    saveFormulas,
+    resetFormulas,
   } = useGuideTargets();
 
-  // Calculate total chats from targets
-  const getTotalChats = useCallback((targetsInput: { chatCount: number }[]) => {
-    return targetsInput.reduce((sum, t) => sum + t.chatCount, 0);
+  // Calculate total chats from targets based on view mode
+  const getTotalChats = useCallback((targetsInput: GuideTarget[], mode: 'day' | 'month') => {
+    return targetsInput.reduce(
+      (sum, t) => sum + (mode === 'day' ? t.chatCount : t.monthlyChatCount),
+      0
+    );
   }, []);
 
   // Calculate NRPC (New Revenue Per Chat)
@@ -56,15 +64,13 @@ export function Dashboard({ onLogout }: DashboardProps) {
     return newRevenue / totalChats;
   }, []);
 
-  // Fullscreen / screenshot mode toggle (uses browser fullscreen when available, falls back to in-app mode)
+  // Fullscreen / screenshot mode toggle
   const toggleFullscreen = useCallback(async () => {
     const next = !isFullscreen;
     setIsFullscreen(next);
 
     if (next) {
-      // Try browser fullscreen (can be blocked in embedded previews)
       const el = rootRef.current;
-      
       const requestFullscreen = el?.requestFullscreen?.bind(el);
 
       if (requestFullscreen) {
@@ -100,7 +106,7 @@ export function Dashboard({ onLogout }: DashboardProps) {
     return () => document.removeEventListener('fullscreenchange', handleFullscreenChange);
   }, [isFullscreen]);
 
-  // Prevent page scroll in fullscreen/screenshot mode (keeps summary + table framed for screenshots)
+  // Prevent page scroll in fullscreen/screenshot mode
   useEffect(() => {
     const prev = document.body.style.overflow;
     if (isFullscreen) document.body.style.overflow = 'hidden';
@@ -158,7 +164,7 @@ export function Dashboard({ onLogout }: DashboardProps) {
     );
   }
 
-  const totalChats = getTotalChats(targets);
+  const totalChats = getTotalChats(targets, viewMode);
   const nrpc = parsedData ? calculateNRPC(parsedData.summary.newSales, totalChats) : 0;
   const newConversion = parsedData && totalChats > 0 ? (parsedData.summary.newOrders / totalChats) * 100 : 0;
   const newAos = parsedData && parsedData.summary.newOrders > 0 ? parsedData.summary.newSales / parsedData.summary.newOrders : 0;
@@ -194,6 +200,28 @@ export function Dashboard({ onLogout }: DashboardProps) {
             </div>
 
             <div className="flex items-center gap-3">
+              {/* Day / Month Toggle */}
+              <div className="flex items-center gap-1 bg-muted rounded-lg p-1">
+                <button
+                  onClick={() => setViewMode('day')}
+                  className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-medium transition-colors ${
+                    viewMode === 'day' ? 'bg-primary text-primary-foreground' : 'text-muted-foreground hover:text-foreground'
+                  }`}
+                >
+                  <CalendarDays className="w-3.5 h-3.5" />
+                  Day
+                </button>
+                <button
+                  onClick={() => setViewMode('month')}
+                  className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-medium transition-colors ${
+                    viewMode === 'month' ? 'bg-primary text-primary-foreground' : 'text-muted-foreground hover:text-foreground'
+                  }`}
+                >
+                  <CalendarRange className="w-3.5 h-3.5" />
+                  Month
+                </button>
+              </div>
+
               {/* Fullscreen Toggle */}
               <Button
                 variant="outline"
@@ -217,6 +245,8 @@ export function Dashboard({ onLogout }: DashboardProps) {
                     onSaveTargets={saveTargets}
                     onSaveFormulas={saveFormulas}
                     onResetFormulas={resetFormulas}
+                    viewMode={viewMode}
+                    onViewModeChange={setViewMode}
                   />
                   <Button
                     variant="ghost"
@@ -270,21 +300,23 @@ export function Dashboard({ onLogout }: DashboardProps) {
                   <div className={`rounded-lg flex items-center justify-center ${isFullscreen ? 'w-10 h-10 bg-success/20' : 'w-8 h-8 bg-success/20'}`}>
                     <DollarSign className={`text-success ${isFullscreen ? 'w-5 h-5' : 'w-4 h-4'}`} />
                   </div>
-                  <h2 className={`font-semibold text-foreground ${isFullscreen ? 'text-2xl' : 'text-lg'}`}>Summary</h2>
+                  <h2 className={`font-semibold text-foreground ${isFullscreen ? 'text-2xl' : 'text-lg'}`}>
+                    Summary ({viewMode === 'day' ? 'Daily' : 'Monthly'})
+                  </h2>
                 </div>
                 {parsedData.dateRange && (
                   <div className={`flex items-center gap-2 text-muted-foreground rounded-lg ${isFullscreen ? 'text-sm bg-muted/30 px-4 py-2' : 'text-sm bg-muted/50 px-3 py-1.5'}`}>
-                    <Calendar className={isFullscreen ? 'w-4 h-4' : 'w-4 h-4'} />
+                    <Calendar className="w-4 h-4" />
                     {parsedData.dateRange}
                   </div>
                 )}
               </div>
 
-              <div className={`grid grid-cols-2 md:grid-cols-3 xl:grid-cols-5 ${isFullscreen ? 'gap-6' : 'gap-4'}`}>
+              <div className={`grid grid-cols-2 md:grid-cols-3 xl:grid-cols-6 ${isFullscreen ? 'gap-6' : 'gap-4'}`}>
                 <StatCard
                   title="NewConversion%"
                   value={totalChats > 0 ? formatPercent(newConversion) : '-'}
-                  subtitle={totalChats > 0 ? `${parsedData.summary.newOrders} new orders / ${totalChats} chats` : 'No chat data'}
+                  subtitle={totalChats > 0 ? `${parsedData.summary.newOrders} new / ${totalChats} chats` : 'No chat data'}
                   icon={Percent}
                   variant={totalChats > 0 ? 'success' : 'warning'}
                   compact={false}
@@ -330,6 +362,16 @@ export function Dashboard({ onLogout }: DashboardProps) {
                   compact={false}
                   isFullscreen={isFullscreen}
                 />
+
+                <StatCard
+                  title="Total Chats"
+                  value={totalChats.toString()}
+                  subtitle={viewMode === 'day' ? 'Daily chats' : 'Monthly chats'}
+                  icon={Users}
+                  variant="default"
+                  compact={false}
+                  isFullscreen={isFullscreen}
+                />
               </div>
             </section>
 
@@ -344,8 +386,15 @@ export function Dashboard({ onLogout }: DashboardProps) {
                 </h2>
               </div>
 
-              <SalesTable salesData={parsedData.salesData} targets={targets} isFullscreen={isFullscreen} />
+              <SalesTable salesData={parsedData.salesData} targets={targets} isFullscreen={isFullscreen} viewMode={viewMode} />
             </section>
+
+            {/* Charts Section - Hidden in fullscreen */}
+            {!isFullscreen && (
+              <section className="animate-fade-in" style={{ animationDelay: '200ms' }}>
+                <PerformanceCharts salesData={parsedData.salesData} targets={targets} viewMode={viewMode} />
+              </section>
+            )}
           </>
         )}
 
@@ -358,7 +407,7 @@ export function Dashboard({ onLogout }: DashboardProps) {
               </div>
               <h2 className="text-lg font-semibold text-foreground">Configured Guides ({targets.length})</h2>
             </div>
-            <SalesTable salesData={[]} targets={targets} compact={false} isFullscreen={false} />
+            <SalesTable salesData={[]} targets={targets} compact={false} isFullscreen={false} viewMode={viewMode} />
           </section>
         )}
       </main>
@@ -374,4 +423,5 @@ export function Dashboard({ onLogout }: DashboardProps) {
     </div>
   );
 }
+
 
