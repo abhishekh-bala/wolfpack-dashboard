@@ -185,12 +185,28 @@
   }
 }
 
-/* Fullscreen mode styles */
+/* Fullscreen / Screenshot mode styles */
 .fullscreen-mode {
-  font-size: 0.95rem;
+  /* Louder, higher-contrast palette for screenshots */
+  --background: 220 22% 6%;
+  --card: 220 18% 11%;
+  --muted: 220 18% 14%;
+  --border: 220 18% 28%;
+  --muted-foreground: 215 18% 70%;
+
+  /* Stronger glow */
+  --shadow-glow: 0 0 45px hsl(var(--primary) / 0.35);
+
+  font-size: 1rem;
 }
 
 .fullscreen-mode .glass-card {
-  background: hsl(220, 20%, 8%) / 0.9;
-  border-color: hsl(220, 15%, 22%);
+  background: hsl(var(--card) / 0.92);
+  border-color: hsl(var(--border) / 0.7);
+  box-shadow: var(--shadow-card), var(--shadow-glow);
 }
+
+.fullscreen-mode .stat-card {
+  padding: 1.5rem;
+}
+
