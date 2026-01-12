@@ -32,10 +32,15 @@ interface SalesTableProps {
   isFullscreen?: boolean;
 }
 
+const isTeamLeaderName = (name: string) => {
+  const n = name.toLowerCase().replace(/\s+/g, ' ').trim();
+  return n.includes('abhishekh') && n.includes('dey');
+};
+
 export function SalesTable({ salesData, targets, compact = false, isFullscreen = false }: SalesTableProps) {
   const computedData = useMemo(() => {
     const dataMap = new Map<string, SalesData>();
-    
+
     // Map sales data by name
     salesData.forEach((item) => {
       dataMap.set(item.name.toLowerCase(), item);
@@ -60,7 +65,7 @@ export function SalesTable({ salesData, targets, compact = false, isFullscreen =
       const revenueDeficit = target.targetRevenue - newRevenue;
       const orderDeficit = target.targetOrders - orders;
       const currentConversion = hasChatData ? (orders / chatCount) * 100 : 0;
-      const ordersToTarget = hasChatData 
+      const ordersToTarget = hasChatData
         ? Math.max(0, Math.ceil((target.targetConversion / 100) * chatCount - orders))
         : 0;
       const nrpc = hasChatData ? newRevenue / chatCount : 0;
@@ -111,23 +116,23 @@ export function SalesTable({ salesData, targets, compact = false, isFullscreen =
   }, [salesData, targets]);
 
   const DeficitCell = ({ value, isCurrency = false }: { value: number; isCurrency?: boolean }) => {
-    const isPositive = value <= 0;
+    const isGood = value <= 0;
     const displayValue = isCurrency ? formatCurrency(Math.abs(value)) : Math.abs(value);
-    
+
     return (
-      <div className={`flex items-center justify-end gap-1 font-mono ${compact ? 'text-xs' : 'text-sm'} ${
-        isPositive 
-          ? isFullscreen ? 'text-[hsl(142,80%,55%)]' : 'text-success' 
-          : isFullscreen ? 'text-[hsl(0,80%,60%)]' : 'text-destructive'
-      }`}>
+      <div
+        className={`flex items-center justify-end gap-1 font-mono ${compact ? 'text-xs' : isFullscreen ? 'text-base' : 'text-sm'} ${
+          isGood ? 'text-success' : 'text-destructive'
+        }`}
+      >
         {value === 0 ? (
           <Minus className="w-3 h-3" />
-        ) : isPositive ? (
+        ) : isGood ? (
           <TrendingUp className="w-3 h-3" />
         ) : (
           <TrendingDown className="w-3 h-3" />
         )}
-        <span>{isPositive && value !== 0 ? '+' : value < 0 ? '-' : ''}{displayValue}</span>
+        <span>{isGood && value !== 0 ? '+' : value < 0 ? '-' : ''}{displayValue}</span>
       </div>
     );
   };
@@ -142,96 +147,87 @@ export function SalesTable({ salesData, targets, compact = false, isFullscreen =
   }
 
   return (
-    <div className={`overflow-hidden ${
-      isFullscreen 
-        ? 'bg-[hsl(220,20%,6%)]/95 border border-[hsl(220,15%,20%)] rounded-lg' 
-        : 'glass-card'
-    }`}>
+    <div className={`overflow-hidden glass-card ${isFullscreen ? 'glow-primary ring-1 ring-primary/20' : ''}`}>
       <div className="overflow-x-auto">
         <Table className={compact ? 'text-xs' : ''}>
           <TableHeader>
-            <TableRow className={`hover:bg-muted/50 ${
-              isFullscreen 
-                ? 'bg-gradient-to-r from-[hsl(220,20%,12%)] via-[hsl(220,20%,10%)] to-[hsl(220,20%,12%)]' 
-                : 'bg-gradient-to-r from-muted/50 via-muted/30 to-muted/50'
-            }`}>
-              <TableHead className={`text-foreground font-bold ${compact ? 'py-2' : ''}`}>Name</TableHead>
-              <TableHead className={`text-foreground font-bold text-center ${compact ? 'py-2' : ''}`}>Orders</TableHead>
-              <TableHead className={`text-foreground font-bold text-right ${compact ? 'py-2' : ''}`}>New Revenue</TableHead>
-              <TableHead className={`text-foreground font-bold text-right ${compact ? 'py-2' : ''}`}>Target Rev</TableHead>
-              <TableHead className={`text-foreground font-bold text-right ${compact ? 'py-2' : ''}`}>Rev Deficit</TableHead>
-              <TableHead className={`text-foreground font-bold text-center ${compact ? 'py-2' : ''}`}>Target Ord</TableHead>
-              <TableHead className={`text-foreground font-bold text-center ${compact ? 'py-2' : ''}`}>Ord Deficit</TableHead>
-              <TableHead className={`text-foreground font-bold text-center ${compact ? 'py-2' : ''}`}>Chats</TableHead>
-              <TableHead className={`text-foreground font-bold text-center ${compact ? 'py-2' : ''}`}>NRPC</TableHead>
-              <TableHead className={`text-foreground font-bold text-center ${compact ? 'py-2' : ''}`}>Conv %</TableHead>
-              <TableHead className={`text-foreground font-bold text-center ${compact ? 'py-2' : ''}`}>Target %</TableHead>
-              <TableHead className={`text-foreground font-bold text-center ${compact ? 'py-2' : ''}`}>Need</TableHead>
+            <TableRow className={`hover:bg-muted/50 ${isFullscreen ? 'bg-muted/30' : 'bg-gradient-to-r from-muted/50 via-muted/30 to-muted/50'}`}>
+              <TableHead className={`text-foreground font-bold ${isFullscreen ? 'text-sm py-4' : compact ? 'py-2' : ''}`}>Name</TableHead>
+              <TableHead className={`text-foreground font-bold text-center ${isFullscreen ? 'text-sm py-4' : compact ? 'py-2' : ''}`}>New Orders</TableHead>
+              <TableHead className={`text-foreground font-bold text-right ${isFullscreen ? 'text-sm py-4' : compact ? 'py-2' : ''}`}>New Revenue</TableHead>
+              <TableHead className={`text-foreground font-bold text-right ${isFullscreen ? 'text-sm py-4' : compact ? 'py-2' : ''}`}>Target Rev</TableHead>
+              <TableHead className={`text-foreground font-bold text-right ${isFullscreen ? 'text-sm py-4' : compact ? 'py-2' : ''}`}>Rev Deficit</TableHead>
+              <TableHead className={`text-foreground font-bold text-center ${isFullscreen ? 'text-sm py-4' : compact ? 'py-2' : ''}`}>Target Ord</TableHead>
+              <TableHead className={`text-foreground font-bold text-center ${isFullscreen ? 'text-sm py-4' : compact ? 'py-2' : ''}`}>Ord Deficit</TableHead>
+              <TableHead className={`text-foreground font-bold text-center ${isFullscreen ? 'text-sm py-4' : compact ? 'py-2' : ''}`}>Chats</TableHead>
+              <TableHead className={`text-foreground font-bold text-center ${isFullscreen ? 'text-sm py-4' : compact ? 'py-2' : ''}`}>NRPC</TableHead>
+              <TableHead className={`text-foreground font-bold text-center ${isFullscreen ? 'text-sm py-4' : compact ? 'py-2' : ''}`}>NewConv %</TableHead>
+              <TableHead className={`text-foreground font-bold text-center ${isFullscreen ? 'text-sm py-4' : compact ? 'py-2' : ''}`}>Target %</TableHead>
+              <TableHead className={`text-foreground font-bold text-center ${isFullscreen ? 'text-sm py-4' : compact ? 'py-2' : ''}`}>Need</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
             {computedData.map((row, index) => {
-              // Determine row status for styling
               const isExceedingTargets = row.revenueDeficit <= 0 && row.orderDeficit <= 0 && row.targetRevenue > 0;
-              
+              const isLeader = isTeamLeaderName(row.name);
+
               return (
                 <TableRow
                   key={row.name}
                   className={`
                     animate-fade-in border-b transition-colors
-                    ${isFullscreen 
-                      ? `border-[hsl(220,15%,15%)] ${!row.isFromFile ? 'bg-[hsl(45,80%,50%)]/5' : ''} ${isExceedingTargets ? 'bg-[hsl(142,70%,45%)]/10' : ''} ${index % 2 === 0 ? 'bg-[hsl(220,20%,8%)]/50' : ''} hover:bg-primary/10`
-                      : `border-border/50 ${!row.isFromFile ? 'bg-warning/5' : ''} ${isExceedingTargets ? 'bg-success/5' : ''} ${index % 2 === 0 ? 'bg-muted/10' : ''} hover:bg-primary/5`
-                    }
+                    border-border/50
+                    ${!row.isFromFile ? 'bg-warning/5' : ''}
+                    ${isExceedingTargets ? 'bg-success/5' : ''}
+                    ${index % 2 === 0 ? 'bg-muted/10' : ''}
+                    hover:bg-primary/10
                   `}
                   style={{ animationDelay: `${index * 30}ms` }}
                 >
-                  <TableCell className={`font-medium ${compact ? 'py-1.5' : ''}`}>
+                  <TableCell className={`font-medium ${compact ? 'py-1.5' : isFullscreen ? 'py-4' : ''}`}>
                     <div className="flex items-center gap-2">
-                      <span className={`${
-                        isExceedingTargets 
-                          ? isFullscreen ? 'text-[hsl(142,80%,55%)]' : 'text-success' 
-                          : ''
-                      }`}>{row.name}</span>
-                      {!row.isFromFile && (
-                        <span className={`text-[10px] px-1.5 py-0.5 rounded font-medium ${
-                          isFullscreen 
-                            ? 'bg-[hsl(45,80%,50%)]/20 text-[hsl(45,80%,60%)]' 
-                            : 'bg-warning/20 text-warning'
-                        }`}>
-                          No File Data
+                      <span
+                        className={`${isFullscreen ? 'text-base font-semibold' : ''} ${
+                          isExceedingTargets ? 'text-success' : ''
+                        }`}
+                      >
+                        {row.name}
+                      </span>
+                      {isLeader && (
+                        <span className="text-xs px-2 py-0.5 rounded-md bg-accent/20 text-accent border border-accent/30 font-semibold">
+                          Team Leader
                         </span>
                       )}
                     </div>
                   </TableCell>
-                  <TableCell className={`text-center font-mono ${compact ? 'py-1.5' : ''}`}>
-                    <span className={`inline-flex items-center justify-center min-w-[2rem] px-2 py-0.5 rounded ${
-                      isFullscreen 
-                        ? 'bg-[hsl(220,20%,15%)] text-foreground' 
-                        : 'bg-muted/50'
-                    }`}>
+
+                  <TableCell className={`text-center font-mono ${compact ? 'py-1.5' : isFullscreen ? 'py-4 text-base' : ''}`}>
+                    <span className="inline-flex items-center justify-center min-w-[2rem] px-2 py-0.5 rounded bg-muted/50 text-foreground">
                       {row.orders}
                     </span>
                   </TableCell>
-                  <TableCell className={`text-right font-mono ${compact ? 'py-1.5' : ''}`}>
-                    <span className={`font-semibold ${isFullscreen ? 'text-[hsl(200,100%,60%)]' : 'text-primary'}`}>
-                      {formatCurrency(row.newRevenue)}
-                    </span>
+
+                  <TableCell className={`text-right font-mono ${compact ? 'py-1.5' : isFullscreen ? 'py-4 text-base' : ''}`}>
+                    <span className="font-semibold text-primary">{formatCurrency(row.newRevenue)}</span>
                   </TableCell>
-                  <TableCell className={`text-right font-mono text-muted-foreground ${compact ? 'py-1.5' : ''}`}>
+
+                  <TableCell className={`text-right font-mono text-muted-foreground ${compact ? 'py-1.5' : isFullscreen ? 'py-4 text-base' : ''}`}>
                     {row.targetRevenue > 0 ? formatCurrency(row.targetRevenue) : '-'}
                   </TableCell>
-                  <TableCell className={`text-right ${compact ? 'py-1.5' : ''}`}>
+
+                  <TableCell className={`${compact ? 'py-1.5' : isFullscreen ? 'py-4' : ''} text-right`}>
                     {row.targetRevenue > 0 ? (
                       <DeficitCell value={row.revenueDeficit} isCurrency />
                     ) : (
                       <span className="text-muted-foreground">-</span>
                     )}
                   </TableCell>
-                  <TableCell className={`text-center font-mono text-muted-foreground ${compact ? 'py-1.5' : ''}`}>
+
+                  <TableCell className={`text-center font-mono text-muted-foreground ${compact ? 'py-1.5' : isFullscreen ? 'py-4 text-base' : ''}`}>
                     {row.targetOrders > 0 ? row.targetOrders : '-'}
                   </TableCell>
-                  <TableCell className={`text-center ${compact ? 'py-1.5' : ''}`}>
+
+                  <TableCell className={`text-center ${compact ? 'py-1.5' : isFullscreen ? 'py-4' : ''}`}>
                     {row.targetOrders > 0 ? (
                       <div className="flex justify-center">
                         <DeficitCell value={row.orderDeficit} />
@@ -240,51 +236,42 @@ export function SalesTable({ salesData, targets, compact = false, isFullscreen =
                       <span className="text-muted-foreground">-</span>
                     )}
                   </TableCell>
-                  <TableCell className={`text-center font-mono ${compact ? 'py-1.5' : ''}`}>
+
+                  <TableCell className={`text-center font-mono ${compact ? 'py-1.5' : isFullscreen ? 'py-4 text-base' : ''}`}>
                     {row.hasChatData ? (
-                      <span className={`inline-flex items-center justify-center min-w-[2rem] px-2 py-0.5 rounded ${
-                        isFullscreen 
-                          ? 'bg-[hsl(180,70%,40%)]/20 text-[hsl(180,80%,60%)]' 
-                          : 'bg-accent/20 text-accent'
-                      }`}>
+                      <span className="inline-flex items-center justify-center min-w-[2rem] px-2 py-0.5 rounded bg-accent/20 text-accent">
                         {row.chatCount}
                       </span>
                     ) : (
                       <span className="text-muted-foreground text-xs">No Data</span>
                     )}
                   </TableCell>
-                  <TableCell className={`text-center font-mono ${compact ? 'py-1.5' : ''}`}>
+
+                  <TableCell className={`text-center font-mono ${compact ? 'py-1.5' : isFullscreen ? 'py-4 text-base' : ''}`}>
                     {row.hasChatData ? (
-                      <span className={`font-semibold ${isFullscreen ? 'text-[hsl(280,80%,70%)]' : 'text-foreground'}`}>
-                        {formatCurrency(row.nrpc)}
-                      </span>
+                      <span className="font-semibold text-foreground">{formatCurrency(row.nrpc)}</span>
                     ) : (
                       <span className="text-muted-foreground">-</span>
                     )}
                   </TableCell>
-                  <TableCell className={`text-center font-mono ${compact ? 'py-1.5' : ''}`}>
+
+                  <TableCell className={`text-center font-mono ${compact ? 'py-1.5' : isFullscreen ? 'py-4 text-base' : ''}`}>
                     {row.hasChatData ? (
-                      <span className={`${
-                        row.currentConversion >= row.targetConversion 
-                          ? isFullscreen ? 'text-[hsl(142,80%,55%)]' : 'text-success' 
-                          : 'text-foreground'
-                      }`}>
+                      <span className={row.currentConversion >= row.targetConversion ? 'text-success' : 'text-foreground'}>
                         {formatPercent(row.currentConversion)}
                       </span>
                     ) : (
                       <span className="text-muted-foreground">-</span>
                     )}
                   </TableCell>
-                  <TableCell className={`text-center font-mono text-muted-foreground ${compact ? 'py-1.5' : ''}`}>
+
+                  <TableCell className={`text-center font-mono text-muted-foreground ${compact ? 'py-1.5' : isFullscreen ? 'py-4 text-base' : ''}`}>
                     {row.targetConversion > 0 ? formatPercent(row.targetConversion) : '-'}
                   </TableCell>
-                  <TableCell className={`text-center ${compact ? 'py-1.5' : ''}`}>
+
+                  <TableCell className={`text-center ${compact ? 'py-1.5' : isFullscreen ? 'py-4 text-base' : ''}`}>
                     {row.targetConversion > 0 && row.hasChatData ? (
-                      <span className={`font-mono font-semibold ${
-                        row.ordersToTarget > 0 
-                          ? isFullscreen ? 'text-[hsl(45,90%,55%)]' : 'text-warning' 
-                          : isFullscreen ? 'text-[hsl(142,80%,55%)]' : 'text-success'
-                      }`}>
+                      <span className={`font-mono font-semibold ${row.ordersToTarget > 0 ? 'text-warning' : 'text-success'}`}>
                         {row.ordersToTarget}
                       </span>
                     ) : (
@@ -300,3 +287,4 @@ export function SalesTable({ salesData, targets, compact = false, isFullscreen =
     </div>
   );
 }
+
