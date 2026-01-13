@@ -21,14 +21,7 @@ export function LoginPage({ onLogin }: LoginPageProps) {
   const [isLoading, setIsLoading] = useState(false);
   const { toast } = useToast();
 
-  useEffect(() => {
-    // Load saved credentials on mount
-    const saved = getCredentials();
-    if (saved) {
-      setUsername(saved.username);
-      setPassword(saved.password);
-    }
-  }, []);
+  // Removed auto-fill of credentials for security
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
