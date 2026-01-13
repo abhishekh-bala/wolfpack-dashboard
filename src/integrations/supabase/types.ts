@@ -86,6 +86,30 @@ export type Database = {
         }
         Relationships: []
       }
+      published_sales_data: {
+        Row: {
+          id: string
+          kpi_overrides: Json | null
+          published_at: string
+          sales_data: Json
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          kpi_overrides?: Json | null
+          published_at?: string
+          sales_data: Json
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          kpi_overrides?: Json | null
+          published_at?: string
+          sales_data?: Json
+          updated_at?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never

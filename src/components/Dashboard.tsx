@@ -38,12 +38,20 @@ interface DashboardProps {
 export function Dashboard({ onLogout }: DashboardProps) {
   const rootRef = useRef<HTMLDivElement>(null);
 
-  const [parsedData, setParsedData] = useState<ParsedMhtmlData | null>(null);
+  // Published data from database (persistent)
+  const [publishedData, setPublishedData] = useState<ParsedMhtmlData | null>(null);
+  const [publishedOverrides, setPublishedOverrides] = useState<Record<string, Partial<SalesData>>>({});
+  
+  // Local data from file upload (temporary, not persisted until published)
+  const [localParsedData, setLocalParsedData] = useState<ParsedMhtmlData | null>(null);
+  const [localKpiOverrides, setLocalKpiOverrides] = useState<Record<string, Partial<SalesData>>>({});
+  const [hasLocalChanges, setHasLocalChanges] = useState(false);
+  
   const [isProcessing, setIsProcessing] = useState(false);
   const [isPublishing, setIsPublishing] = useState(false);
+  const [isLoadingPublished, setIsLoadingPublished] = useState(true);
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [viewMode, setViewMode] = useState<'day' | 'month'>('day');
-  const [kpiOverrides, setKpiOverrides] = useState<Record<string, Partial<SalesData>>>({});
   const [editingAgent, setEditingAgent] = useState<string | null>(null);
   const { toast } = useToast();
 
@@ -55,6 +63,39 @@ export function Dashboard({ onLogout }: DashboardProps) {
     saveFormulas,
     resetFormulas,
   } = useGuideTargets();
+
+  // Load published data from database on mount
+  useEffect(() => {
+    const loadPublishedData = async () => {
+      try {
+        const { data, error } = await supabase
+          .from('published_sales_data')
+          .select('*')
+          .order('published_at', { ascending: false })
+          .limit(1)
+          .single();
+
+        if (error && error.code !== 'PGRST116') {
+          console.error('Error loading published data:', error);
+        }
+
+        if (data) {
+          setPublishedData(data.sales_data as unknown as ParsedMhtmlData);
+          setPublishedOverrides((data.kpi_overrides as Record<string, Partial<SalesData>>) || {});
+        }
+      } catch (err) {
+        console.error('Failed to load published data:', err);
+      } finally {
+        setIsLoadingPublished(false);
+      }
+    };
+
+    loadPublishedData();
+  }, []);
+
+  // The active data is local if we have local changes, otherwise published
+  const parsedData = hasLocalChanges ? localParsedData : publishedData;
+  const kpiOverrides = hasLocalChanges ? localKpiOverrides : publishedOverrides;
 
   // Calculate total chats from targets based on view mode
   const getTotalChats = useCallback((targetsInput: GuideTarget[], mode: 'day' | 'month') => {
@@ -125,10 +166,12 @@ export function Dashboard({ onLogout }: DashboardProps) {
     setIsProcessing(true);
     try {
       const data = parseMhtml(content);
-      setParsedData(data);
+      setLocalParsedData(data);
+      setLocalKpiOverrides({});
+      setHasLocalChanges(true);
       toast({
         title: 'File Parsed Successfully',
-        description: `Found ${data.salesData.length} employees with sales data.`,
+        description: `Found ${data.salesData.length} employees. Click "Publish" to save permanently.`,
       });
     } catch (error) {
       console.error('Parse error:', error);
@@ -152,35 +195,49 @@ export function Dashboard({ onLogout }: DashboardProps) {
   };
 
   const handleClearData = () => {
-    setParsedData(null);
-    setKpiOverrides({});
+    // Clear local changes, revert to published data
+    setLocalParsedData(null);
+    setLocalKpiOverrides({});
+    setHasLocalChanges(false);
     toast({
-      title: 'Data Cleared',
-      description: 'Upload a new file to continue.',
+      title: 'Local Changes Discarded',
+      description: publishedData ? 'Reverted to published data.' : 'Upload a new file to continue.',
     });
   };
 
-  // Publish data to Supabase for real-time tracking
+  // Publish data to Supabase database
   const handlePublishData = async () => {
-    if (!parsedData) return;
+    const dataToPublish = hasLocalChanges ? localParsedData : publishedData;
+    const overridesToPublish = hasLocalChanges ? localKpiOverrides : publishedOverrides;
+    
+    if (!dataToPublish) return;
     
     setIsPublishing(true);
     try {
-      // Store the parsed data with overrides in localStorage for now
-      // This can be extended to Supabase later
-      const dataToPublish = {
-        ...parsedData,
-        salesData: getEffectiveSalesData(),
-        publishedAt: new Date().toISOString(),
-        viewMode,
-      };
-      localStorage.setItem('wolfpack_published_data', JSON.stringify(dataToPublish));
+      // Delete existing published data
+      await supabase.from('published_sales_data').delete().neq('id', '00000000-0000-0000-0000-000000000000');
+      
+      // Insert new published data
+      const { error } = await supabase.from('published_sales_data').insert([{
+        sales_data: JSON.parse(JSON.stringify(dataToPublish)),
+        kpi_overrides: JSON.parse(JSON.stringify(overridesToPublish)),
+      }]);
+
+      if (error) throw error;
+
+      // Update published state and clear local changes
+      setPublishedData(dataToPublish);
+      setPublishedOverrides(overridesToPublish);
+      setLocalParsedData(null);
+      setLocalKpiOverrides({});
+      setHasLocalChanges(false);
       
       toast({
         title: 'Data Published!',
-        description: 'Dashboard data is now available for real-time viewing.',
+        description: 'Dashboard data saved to database. It will persist across sessions.',
       });
     } catch (error) {
+      console.error('Publish error:', error);
       toast({
         title: 'Publish Failed',
         description: 'Failed to publish data. Please try again.',
@@ -203,27 +260,52 @@ export function Dashboard({ onLogout }: DashboardProps) {
     });
   }, [parsedData, kpiOverrides]);
 
-  // Handle KPI override for an agent
+  // Handle KPI override for an agent (updates local state)
   const handleKpiOverride = (agentName: string, field: keyof SalesData, value: number) => {
-    setKpiOverrides(prev => ({
-      ...prev,
-      [agentName]: {
-        ...prev[agentName],
-        [field]: value,
-      },
-    }));
+    if (hasLocalChanges) {
+      setLocalKpiOverrides(prev => ({
+        ...prev,
+        [agentName]: {
+          ...prev[agentName],
+          [field]: value,
+        },
+      }));
+    } else {
+      // If editing published data, switch to local mode
+      setLocalParsedData(publishedData);
+      setLocalKpiOverrides(prev => ({
+        ...publishedOverrides,
+        ...prev,
+        [agentName]: {
+          ...publishedOverrides[agentName],
+          ...prev[agentName],
+          [field]: value,
+        },
+      }));
+      setHasLocalChanges(true);
+    }
   };
 
   // Clear override for an agent
   const clearAgentOverride = (agentName: string) => {
-    setKpiOverrides(prev => {
-      const newOverrides = { ...prev };
-      delete newOverrides[agentName];
-      return newOverrides;
-    });
+    if (hasLocalChanges) {
+      setLocalKpiOverrides(prev => {
+        const newOverrides = { ...prev };
+        delete newOverrides[agentName];
+        return newOverrides;
+      });
+    } else {
+      setLocalParsedData(publishedData);
+      setLocalKpiOverrides(() => {
+        const newOverrides = { ...publishedOverrides };
+        delete newOverrides[agentName];
+        return newOverrides;
+      });
+      setHasLocalChanges(true);
+    }
   };
 
-  if (isLoading) {
+  if (isLoading || isLoadingPublished) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
         <div className="flex flex-col items-center gap-4">
@@ -368,29 +450,38 @@ export function Dashboard({ onLogout }: DashboardProps) {
                 </div>
                 <h2 className="text-lg font-semibold text-foreground">Data Import</h2>
               </div>
-              {parsedData && (
-                <div className="flex items-center gap-2">
-                  <Button
-                    variant="default"
-                    size="sm"
-                    onClick={handlePublishData}
-                    disabled={isPublishing}
-                    className="gap-2 bg-success hover:bg-success/90 text-success-foreground"
-                  >
-                    {isPublishing ? <Loader2 className="w-4 h-4 animate-spin" /> : <Upload className="w-4 h-4" />}
-                    Publish Data
-                  </Button>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={handleClearData}
-                    className="gap-2 border-primary/30 hover:border-primary"
-                  >
-                    <RefreshCw className="w-4 h-4" />
-                    Upload New File
-                  </Button>
-                </div>
-              )}
+              <div className="flex items-center gap-2">
+                {hasLocalChanges && (
+                  <span className="text-xs text-warning bg-warning/20 px-2 py-1 rounded-full font-medium animate-pulse">
+                    Unpublished Changes
+                  </span>
+                )}
+                {parsedData && (
+                  <>
+                    <Button
+                      variant="default"
+                      size="sm"
+                      onClick={handlePublishData}
+                      disabled={isPublishing}
+                      className="gap-2 bg-success hover:bg-success/90 text-success-foreground"
+                    >
+                      {isPublishing ? <Loader2 className="w-4 h-4 animate-spin" /> : <Upload className="w-4 h-4" />}
+                      Publish to Database
+                    </Button>
+                    {hasLocalChanges && (
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={handleClearData}
+                        className="gap-2 border-destructive/30 hover:border-destructive text-destructive"
+                      >
+                        <RefreshCw className="w-4 h-4" />
+                        Discard Changes
+                      </Button>
+                    )}
+                  </>
+                )}
+              </div>
             </div>
             <FileUpload onFileContent={handleFileContent} isProcessing={isProcessing} />
           </section>
