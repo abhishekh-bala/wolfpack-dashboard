@@ -4,11 +4,12 @@ import { SalesTable } from './SalesTable';
 import { StatCard } from './StatCard';
 import { AdminPanel } from './AdminPanel';
 import { PerformanceCharts } from './PerformanceCharts';
-import { parseMhtml, ParsedMhtmlData, formatCurrency, formatPercent } from '@/lib/mhtmlParser';
+import { parseMhtml, ParsedMhtmlData, SalesData, formatCurrency, formatPercent } from '@/lib/mhtmlParser';
 import { useGuideTargets, GuideTarget } from '@/hooks/useGuideTargets';
 import { logout } from '@/lib/storage';
 import { useToast } from '@/hooks/use-toast';
 import { Button } from '@/components/ui/button';
+import { supabase } from '@/integrations/supabase/client';
 import {
   DollarSign,
   TrendingUp,
@@ -19,14 +20,16 @@ import {
   Maximize,
   Minimize,
   Loader2,
-  Zap,
   Percent,
   Hash,
   Coins,
   CalendarDays,
   CalendarRange,
   Users,
+  Upload,
+  Edit3,
 } from 'lucide-react';
+import wolfpackLogo from '@/assets/wolfpack-logo.png';
 
 interface DashboardProps {
   onLogout: () => void;
@@ -37,8 +40,11 @@ export function Dashboard({ onLogout }: DashboardProps) {
 
   const [parsedData, setParsedData] = useState<ParsedMhtmlData | null>(null);
   const [isProcessing, setIsProcessing] = useState(false);
+  const [isPublishing, setIsPublishing] = useState(false);
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [viewMode, setViewMode] = useState<'day' | 'month'>('day');
+  const [kpiOverrides, setKpiOverrides] = useState<Record<string, Partial<SalesData>>>({});
+  const [editingAgent, setEditingAgent] = useState<string | null>(null);
   const { toast } = useToast();
 
   const {
@@ -147,9 +153,73 @@ export function Dashboard({ onLogout }: DashboardProps) {
 
   const handleClearData = () => {
     setParsedData(null);
+    setKpiOverrides({});
     toast({
       title: 'Data Cleared',
       description: 'Upload a new file to continue.',
+    });
+  };
+
+  // Publish data to Supabase for real-time tracking
+  const handlePublishData = async () => {
+    if (!parsedData) return;
+    
+    setIsPublishing(true);
+    try {
+      // Store the parsed data with overrides in localStorage for now
+      // This can be extended to Supabase later
+      const dataToPublish = {
+        ...parsedData,
+        salesData: getEffectiveSalesData(),
+        publishedAt: new Date().toISOString(),
+        viewMode,
+      };
+      localStorage.setItem('wolfpack_published_data', JSON.stringify(dataToPublish));
+      
+      toast({
+        title: 'Data Published!',
+        description: 'Dashboard data is now available for real-time viewing.',
+      });
+    } catch (error) {
+      toast({
+        title: 'Publish Failed',
+        description: 'Failed to publish data. Please try again.',
+        variant: 'destructive',
+      });
+    } finally {
+      setIsPublishing(false);
+    }
+  };
+
+  // Apply KPI overrides to sales data
+  const getEffectiveSalesData = useCallback(() => {
+    if (!parsedData) return [];
+    return parsedData.salesData.map(agent => {
+      const override = kpiOverrides[agent.name];
+      if (override) {
+        return { ...agent, ...override };
+      }
+      return agent;
+    });
+  }, [parsedData, kpiOverrides]);
+
+  // Handle KPI override for an agent
+  const handleKpiOverride = (agentName: string, field: keyof SalesData, value: number) => {
+    setKpiOverrides(prev => ({
+      ...prev,
+      [agentName]: {
+        ...prev[agentName],
+        [field]: value,
+      },
+    }));
+  };
+
+  // Clear override for an agent
+  const clearAgentOverride = (agentName: string) => {
+    setKpiOverrides(prev => {
+      const newOverrides = { ...prev };
+      delete newOverrides[agentName];
+      return newOverrides;
     });
   };
 
@@ -165,9 +235,21 @@ export function Dashboard({ onLogout }: DashboardProps) {
   }
 
   const totalChats = getTotalChats(targets, viewMode);
-  const nrpc = parsedData ? calculateNRPC(parsedData.summary.newSales, totalChats) : 0;
-  const newConversion = parsedData && totalChats > 0 ? (parsedData.summary.newOrders / totalChats) * 100 : 0;
-  const newAos = parsedData && parsedData.summary.newOrders > 0 ? parsedData.summary.newSales / parsedData.summary.newOrders : 0;
+  const effectiveSalesData = getEffectiveSalesData();
+  
+  // Recalculate summary based on effective (overridden) data
+  const effectiveSummary = effectiveSalesData.reduce(
+    (acc, agent) => ({
+      newOrders: acc.newOrders + agent.orders,
+      newSales: acc.newSales + agent.newRevenue,
+    }),
+    { newOrders: 0, newSales: 0 }
+  );
+  
+  const summaryToUse = effectiveSalesData.length > 0 ? effectiveSummary : parsedData?.summary;
+  const nrpc = summaryToUse ? calculateNRPC(summaryToUse.newSales, totalChats) : 0;
+  const newConversion = summaryToUse && totalChats > 0 ? (summaryToUse.newOrders / totalChats) * 100 : 0;
+  const newAos = summaryToUse && summaryToUse.newOrders > 0 ? summaryToUse.newSales / summaryToUse.newOrders : 0;
 
   return (
     <div
@@ -184,8 +266,19 @@ export function Dashboard({ onLogout }: DashboardProps) {
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-4">
               <div className="relative">
-                <div className={`rounded-xl gradient-primary flex items-center justify-center glow-primary transition-all ${isFullscreen ? 'w-14 h-14' : 'w-12 h-12'}`}>
-                  <Zap className={`text-primary-foreground ${isFullscreen ? 'w-7 h-7' : 'w-6 h-6'}`} />
+                {/* Logo - Update at src/assets/wolfpack-logo.png */}
+                <img 
+                  src={wolfpackLogo} 
+                  alt="WolfPack Logo" 
+                  className={`rounded-xl object-cover transition-all ${isFullscreen ? 'w-14 h-14' : 'w-12 h-12'}`}
+                  onError={(e) => {
+                    // Fallback to gradient icon if logo not found
+                    e.currentTarget.style.display = 'none';
+                    e.currentTarget.nextElementSibling?.classList.remove('hidden');
+                  }}
+                />
+                <div className={`rounded-xl gradient-primary flex items-center justify-center glow-primary transition-all hidden ${isFullscreen ? 'w-14 h-14' : 'w-12 h-12'}`}>
+                  <span className={`text-primary-foreground font-bold ${isFullscreen ? 'text-xl' : 'text-lg'}`}>WP</span>
                 </div>
                 <div className="absolute -top-1 -right-1 w-4 h-4 bg-success rounded-full animate-pulse-glow" />
               </div>
@@ -276,15 +369,27 @@ export function Dashboard({ onLogout }: DashboardProps) {
                 <h2 className="text-lg font-semibold text-foreground">Data Import</h2>
               </div>
               {parsedData && (
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={handleClearData}
-                  className="gap-2 border-primary/30 hover:border-primary"
-                >
-                  <RefreshCw className="w-4 h-4" />
-                  Upload New File
-                </Button>
+                <div className="flex items-center gap-2">
+                  <Button
+                    variant="default"
+                    size="sm"
+                    onClick={handlePublishData}
+                    disabled={isPublishing}
+                    className="gap-2 bg-success hover:bg-success/90 text-success-foreground"
+                  >
+                    {isPublishing ? <Loader2 className="w-4 h-4 animate-spin" /> : <Upload className="w-4 h-4" />}
+                    Publish Data
+                  </Button>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={handleClearData}
+                    className="gap-2 border-primary/30 hover:border-primary"
+                  >
+                    <RefreshCw className="w-4 h-4" />
+                    Upload New File
+                  </Button>
+                </div>
               )}
             </div>
             <FileUpload onFileContent={handleFileContent} isProcessing={isProcessing} />
@@ -316,7 +421,7 @@ export function Dashboard({ onLogout }: DashboardProps) {
                 <StatCard
                   title="NewConversion%"
                   value={totalChats > 0 ? formatPercent(newConversion) : '-'}
-                  subtitle={totalChats > 0 ? `${parsedData.summary.newOrders} new / ${totalChats} chats` : 'No chat data'}
+                  subtitle={totalChats > 0 ? `${summaryToUse?.newOrders || 0} new / ${totalChats} chats` : 'No chat data'}
                   icon={Percent}
                   variant={totalChats > 0 ? 'success' : 'warning'}
                   compact={false}
@@ -335,7 +440,7 @@ export function Dashboard({ onLogout }: DashboardProps) {
 
                 <StatCard
                   title="New Revenue"
-                  value={formatCurrency(parsedData.summary.newSales)}
+                  value={formatCurrency(summaryToUse?.newSales || 0)}
                   subtitle="Revenue from new orders"
                   icon={TrendingUp}
                   variant="success"
@@ -345,7 +450,7 @@ export function Dashboard({ onLogout }: DashboardProps) {
 
                 <StatCard
                   title="New Orders"
-                  value={parsedData.summary.newOrders.toString()}
+                  value={(summaryToUse?.newOrders || 0).toString()}
                   subtitle="New orders only"
                   icon={Hash}
                   variant="default"
@@ -355,7 +460,7 @@ export function Dashboard({ onLogout }: DashboardProps) {
 
                 <StatCard
                   title="New AOS"
-                  value={parsedData.summary.newOrders > 0 ? formatCurrency(newAos) : '-'}
+                  value={summaryToUse && summaryToUse.newOrders > 0 ? formatCurrency(newAos) : '-'}
                   subtitle="New avg order size"
                   icon={Coins}
                   variant="default"
@@ -386,13 +491,23 @@ export function Dashboard({ onLogout }: DashboardProps) {
                 </h2>
               </div>
 
-              <SalesTable salesData={parsedData.salesData} targets={targets} isFullscreen={isFullscreen} viewMode={viewMode} />
+              <SalesTable 
+                salesData={effectiveSalesData} 
+                targets={targets} 
+                isFullscreen={isFullscreen} 
+                viewMode={viewMode}
+                kpiOverrides={kpiOverrides}
+                onKpiOverride={handleKpiOverride}
+                onClearOverride={clearAgentOverride}
+                editingAgent={editingAgent}
+                onEditAgent={setEditingAgent}
+              />
             </section>
 
             {/* Charts Section - Hidden in fullscreen */}
             {!isFullscreen && (
               <section className="animate-fade-in" style={{ animationDelay: '200ms' }}>
-                <PerformanceCharts salesData={parsedData.salesData} targets={targets} viewMode={viewMode} />
+                <PerformanceCharts salesData={effectiveSalesData} targets={targets} viewMode={viewMode} />
               </section>
             )}
           </>

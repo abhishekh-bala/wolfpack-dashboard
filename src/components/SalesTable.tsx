@@ -1,7 +1,9 @@
-import { useMemo } from 'react';
+import { useMemo, useState } from 'react';
 import { SalesData, formatCurrency, formatPercent } from '@/lib/mhtmlParser';
 import { GuideTarget } from '@/hooks/useGuideTargets';
-import { TrendingDown, TrendingUp, Minus, AlertCircle } from 'lucide-react';
+import { TrendingDown, TrendingUp, Minus, AlertCircle, Edit3, Check, X } from 'lucide-react';
+import { Input } from '@/components/ui/input';
+import { Button } from '@/components/ui/button';
 import {
   Table,
   TableBody,
@@ -31,6 +33,11 @@ interface SalesTableProps {
   compact?: boolean;
   isFullscreen?: boolean;
   viewMode?: 'day' | 'month';
+  kpiOverrides?: Record<string, Partial<SalesData>>;
+  onKpiOverride?: (agentName: string, field: keyof SalesData, value: number) => void;
+  onClearOverride?: (agentName: string) => void;
+  editingAgent?: string | null;
+  onEditAgent?: (agentName: string | null) => void;
 }
 
 const isTeamLeaderName = (name: string) => {
@@ -38,7 +45,20 @@ const isTeamLeaderName = (name: string) => {
   return n.includes('abhishekh') && n.includes('dey');
 };
 
-export function SalesTable({ salesData, targets, compact = false, isFullscreen = false, viewMode = 'day' }: SalesTableProps) {
+export function SalesTable({ 
+  salesData, 
+  targets, 
+  compact = false, 
+  isFullscreen = false, 
+  viewMode = 'day',
+  kpiOverrides = {},
+  onKpiOverride,
+  onClearOverride,
+  editingAgent,
+  onEditAgent,
+}: SalesTableProps) {
+  const [editValues, setEditValues] = useState<Partial<SalesData>>({});
+  
   const computedData = useMemo(() => {
     const dataMap = new Map<string, SalesData>();
 
@@ -168,12 +188,38 @@ export function SalesTable({ salesData, targets, compact = false, isFullscreen =
               <TableHead className={`text-foreground font-bold text-center ${isFullscreen ? 'text-sm py-4' : compact ? 'py-2' : ''}`}>NewConv %</TableHead>
               <TableHead className={`text-foreground font-bold text-center ${isFullscreen ? 'text-sm py-4' : compact ? 'py-2' : ''}`}>Target %</TableHead>
               <TableHead className={`text-foreground font-bold text-center ${isFullscreen ? 'text-sm py-4' : compact ? 'py-2' : ''}`}>Need</TableHead>
+              {onKpiOverride && (
+                <TableHead className={`text-foreground font-bold text-center ${isFullscreen ? 'text-sm py-4' : compact ? 'py-2' : ''}`}>Actions</TableHead>
+              )}
             </TableRow>
           </TableHeader>
           <TableBody>
             {computedData.map((row, index) => {
               const isExceedingTargets = row.revenueDeficit <= 0 && row.orderDeficit <= 0 && row.targetRevenue > 0;
               const isLeader = isTeamLeaderName(row.name);
+              const isEditing = editingAgent === row.name;
+              const hasOverride = !!kpiOverrides[row.name];
+
+              const startEdit = () => {
+                setEditValues({ orders: row.orders, newRevenue: row.newRevenue });
+                onEditAgent?.(row.name);
+              };
+
+              const cancelEdit = () => {
+                setEditValues({});
+                onEditAgent?.(null);
+              };
+
+              const saveEdit = () => {
+                if (editValues.orders !== undefined) {
+                  onKpiOverride?.(row.name, 'orders', editValues.orders);
+                }
+                if (editValues.newRevenue !== undefined) {
+                  onKpiOverride?.(row.name, 'newRevenue', editValues.newRevenue);
+                }
+                setEditValues({});
+                onEditAgent?.(null);
+              };
 
               return (
                 <TableRow
@@ -183,7 +229,8 @@ export function SalesTable({ salesData, targets, compact = false, isFullscreen =
                     border-border/50
                     ${!row.isFromFile ? 'bg-warning/5' : ''}
                     ${isExceedingTargets ? 'bg-success/5' : ''}
-                    ${index % 2 === 0 ? 'bg-muted/10' : ''}
+                    ${hasOverride ? 'bg-accent/10 ring-1 ring-accent/30' : ''}
+                    ${index % 2 === 0 && !hasOverride ? 'bg-muted/10' : ''}
                     hover:bg-primary/10
                   `}
                   style={{ animationDelay: `${index * 30}ms` }}
@@ -198,21 +245,45 @@ export function SalesTable({ salesData, targets, compact = false, isFullscreen =
                         {row.name}
                       </span>
                       {isLeader && (
-                        <span className="text-xs px-2 py-0.5 rounded-md bg-accent/20 text-accent border border-accent/30 font-semibold">
-                          Team Leader
+                        <span className="text-xs px-2 py-0.5 rounded-md bg-gradient-to-r from-amber-500/20 to-orange-500/20 text-orange-400 border border-orange-400/40 font-bold shadow-sm">
+                          🐺 Team Leader
+                        </span>
+                      )}
+                      {hasOverride && (
+                        <span className="text-xs px-1.5 py-0.5 rounded bg-accent/30 text-accent font-medium">
+                          Modified
                         </span>
                       )}
                     </div>
                   </TableCell>
 
                   <TableCell className={`text-center font-mono ${compact ? 'py-1.5' : isFullscreen ? 'py-4 text-base' : ''}`}>
-                    <span className="inline-flex items-center justify-center min-w-[2rem] px-2 py-0.5 rounded bg-muted/50 text-foreground">
-                      {row.orders}
-                    </span>
+                    {isEditing ? (
+                      <Input
+                        type="number"
+                        value={editValues.orders ?? row.orders}
+                        onChange={(e) => setEditValues(prev => ({ ...prev, orders: parseInt(e.target.value) || 0 }))}
+                        className="w-20 h-8 text-center mx-auto"
+                      />
+                    ) : (
+                      <span className="inline-flex items-center justify-center min-w-[2rem] px-2 py-0.5 rounded bg-muted/50 text-foreground">
+                        {row.orders}
+                      </span>
+                    )}
                   </TableCell>
 
                   <TableCell className={`text-right font-mono ${compact ? 'py-1.5' : isFullscreen ? 'py-4 text-base' : ''}`}>
-                    <span className="font-semibold text-primary">{formatCurrency(row.newRevenue)}</span>
+                    {isEditing ? (
+                      <Input
+                        type="number"
+                        step="0.01"
+                        value={editValues.newRevenue ?? row.newRevenue}
+                        onChange={(e) => setEditValues(prev => ({ ...prev, newRevenue: parseFloat(e.target.value) || 0 }))}
+                        className="w-28 h-8 text-right ml-auto"
+                      />
+                    ) : (
+                      <span className="font-semibold text-primary">{formatCurrency(row.newRevenue)}</span>
+                    )}
                   </TableCell>
 
                   <TableCell className={`text-right font-mono text-muted-foreground ${compact ? 'py-1.5' : isFullscreen ? 'py-4 text-base' : ''}`}>
@@ -282,6 +353,37 @@ export function SalesTable({ salesData, targets, compact = false, isFullscreen =
                       <span className="text-muted-foreground">-</span>
                     )}
                   </TableCell>
+
+                  {onKpiOverride && (
+                    <TableCell className={`text-center ${compact ? 'py-1.5' : isFullscreen ? 'py-4' : ''}`}>
+                      {isEditing ? (
+                        <div className="flex items-center justify-center gap-1">
+                          <Button size="icon" variant="ghost" className="h-7 w-7 text-success hover:text-success" onClick={saveEdit}>
+                            <Check className="w-4 h-4" />
+                          </Button>
+                          <Button size="icon" variant="ghost" className="h-7 w-7 text-destructive hover:text-destructive" onClick={cancelEdit}>
+                            <X className="w-4 h-4" />
+                          </Button>
+                        </div>
+                      ) : (
+                        <div className="flex items-center justify-center gap-1">
+                          <Button size="icon" variant="ghost" className="h-7 w-7 hover:text-primary" onClick={startEdit}>
+                            <Edit3 className="w-4 h-4" />
+                          </Button>
+                          {hasOverride && (
+                            <Button 
+                              size="icon" 
+                              variant="ghost" 
+                              className="h-7 w-7 text-destructive/70 hover:text-destructive" 
+                              onClick={() => onClearOverride?.(row.name)}
+                            >
+                              <X className="w-3.5 h-3.5" />
+                            </Button>
+                          )}
+                        </div>
+                      )}
+                    </TableCell>
+                  )}
                 </TableRow>
               );
             })}
@@ -291,4 +393,3 @@ export function SalesTable({ salesData, targets, compact = false, isFullscreen =
     </div>
   );
 }
-
