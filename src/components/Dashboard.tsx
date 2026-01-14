@@ -6,7 +6,6 @@ import { AdminPanel } from './AdminPanel';
 import { PerformanceCharts } from './PerformanceCharts';
 import { parseMhtml, ParsedMhtmlData, SalesData, formatCurrency, formatPercent } from '@/lib/mhtmlParser';
 import { useGuideTargets, GuideTarget } from '@/hooks/useGuideTargets';
-import { logout } from '@/lib/storage';
 import { useToast } from '@/hooks/use-toast';
 import { Button } from '@/components/ui/button';
 import { supabase } from '@/integrations/supabase/client';
@@ -186,7 +185,6 @@ export function Dashboard({ onLogout }: DashboardProps) {
   };
 
   const handleLogout = () => {
-    logout();
     onLogout();
     toast({
       title: 'Signed Out',

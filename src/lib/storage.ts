@@ -1,41 +1,4 @@
-// Auth storage
-export interface Credentials {
-  username: string;
-  password: string;
-}
-
-const CREDENTIALS_KEY = 'wolfpack_credentials';
-const AUTH_KEY = 'wolfpack_auth';
-
-export function saveCredentials(credentials: Credentials): void {
-  localStorage.setItem(CREDENTIALS_KEY, JSON.stringify(credentials));
-}
-
-export function getCredentials(): Credentials | null {
-  const stored = localStorage.getItem(CREDENTIALS_KEY);
-  if (stored) {
-    try {
-      return JSON.parse(stored);
-    } catch {
-      return null;
-    }
-  }
-  return null;
-}
-
-export function isAuthenticated(): boolean {
-  return localStorage.getItem(AUTH_KEY) === 'true';
-}
-
-export function setAuthenticated(value: boolean): void {
-  localStorage.setItem(AUTH_KEY, value ? 'true' : 'false');
-}
-
-export function logout(): void {
-  localStorage.removeItem(AUTH_KEY);
-}
-
-// Guide/Target storage
+// Guide/Target storage types (kept for legacy compatibility, now using Supabase)
 export interface GuideTarget {
   name: string;
   targetOrders: number;
@@ -51,6 +14,7 @@ export interface FormulaOverride {
   enabled: boolean;
 }
 
+// Legacy localStorage keys (can be removed after migration)
 const TARGETS_KEY = 'wolfpack_targets';
 const FORMULAS_KEY = 'wolfpack_formulas';
 

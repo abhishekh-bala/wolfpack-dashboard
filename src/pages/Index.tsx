@@ -1,35 +1,13 @@
 import { useState, useEffect } from 'react';
 import { LoginPage } from '@/components/LoginPage';
 import { Dashboard } from '@/components/Dashboard';
-import { isAuthenticated, saveCredentials } from '@/lib/storage';
-
-// Initialize default credentials on first load
-const initializeCredentials = () => {
-  const stored = localStorage.getItem('wolfpack_credentials');
-  if (!stored) {
-    saveCredentials({
-      username: 'abhishekh_dey',
-      password: "D1asdfghjkl;'",
-    });
-  }
-};
+import { useAuth } from '@/hooks/useAuth';
 
 const Index = () => {
-  const [isLoggedIn, setIsLoggedIn] = useState(false);
-  const [isLoading, setIsLoading] = useState(true);
+  const { isAuthenticated, isLoading, signOut } = useAuth();
 
-  useEffect(() => {
-    initializeCredentials();
-    setIsLoggedIn(isAuthenticated());
-    setIsLoading(false);
-  }, []);
-
-  const handleLogin = () => {
-    setIsLoggedIn(true);
-  };
-
-  const handleLogout = () => {
-    setIsLoggedIn(false);
+  const handleLogout = async () => {
+    await signOut();
   };
 
   if (isLoading) {
@@ -40,10 +18,10 @@ const Index = () => {
     );
   }
 
-  return isLoggedIn ? (
+  return isAuthenticated ? (
     <Dashboard onLogout={handleLogout} />
   ) : (
-    <LoginPage onLogin={handleLogin} />
+    <LoginPage onLogin={() => {}} />
   );
 };
 
