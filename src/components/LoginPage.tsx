@@ -1,48 +1,76 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Eye, EyeOff, Shield } from 'lucide-react';
-import { saveCredentials, getCredentials, setAuthenticated } from '@/lib/storage';
 import { useToast } from '@/hooks/use-toast';
+import { supabase } from '@/integrations/supabase/client';
 
 interface LoginPageProps {
   onLogin: () => void;
 }
 
-// Default credentials
-const VALID_USERNAME = 'abhishekh_dey';
-const VALID_PASSWORD = "D1asdfghjkl;'";
-
 export function LoginPage({ onLogin }: LoginPageProps) {
-  const [username, setUsername] = useState('');
+  const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const [isSignUp, setIsSignUp] = useState(false);
   const { toast } = useToast();
-
-  // Removed auto-fill of credentials for security
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
 
-    // Simulate a brief loading state
-    await new Promise((resolve) => setTimeout(resolve, 500));
+    try {
+      if (isSignUp) {
+        // Sign up new user
+        const { data, error } = await supabase.auth.signUp({
+          email,
+          password,
+          options: {
+            emailRedirectTo: window.location.origin,
+          },
+        });
 
-    // Validate credentials
-    if (username === VALID_USERNAME && password === VALID_PASSWORD) {
-      saveCredentials({ username, password });
-      setAuthenticated(true);
+        if (error) {
+          toast({
+            title: 'Sign Up Failed',
+            description: error.message,
+            variant: 'destructive',
+          });
+        } else if (data.user) {
+          toast({
+            title: 'Account Created!',
+            description: 'You are now signed in.',
+          });
+          onLogin();
+        }
+      } else {
+        // Sign in existing user
+        const { data, error } = await supabase.auth.signInWithPassword({
+          email,
+          password,
+        });
+
+        if (error) {
+          toast({
+            title: 'Authentication Failed',
+            description: error.message,
+            variant: 'destructive',
+          });
+        } else if (data.user) {
+          toast({
+            title: 'Welcome back!',
+            description: 'Successfully authenticated.',
+          });
+          onLogin();
+        }
+      }
+    } catch (err) {
       toast({
-        title: 'Welcome back!',
-        description: 'Successfully authenticated.',
-      });
-      onLogin();
-    } else {
-      toast({
-        title: 'Authentication Failed',
-        description: 'Invalid username or password.',
+        title: 'Error',
+        description: 'An unexpected error occurred.',
         variant: 'destructive',
       });
     }
@@ -71,15 +99,15 @@ export function LoginPage({ onLogin }: LoginPageProps) {
 
         <form onSubmit={handleSubmit} className="space-y-6">
           <div className="space-y-2">
-            <Label htmlFor="username" className="text-foreground">Username</Label>
+            <Label htmlFor="email" className="text-foreground">Email</Label>
             <Input
-              id="username"
-              type="text"
-              value={username}
-              onChange={(e) => setUsername(e.target.value)}
-              placeholder="Enter your username"
+              id="email"
+              type="email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              placeholder="Enter your email"
               className="input-dark"
-              autoComplete="username"
+              autoComplete="email"
               required
             />
           </div>
@@ -94,8 +122,9 @@ export function LoginPage({ onLogin }: LoginPageProps) {
                 onChange={(e) => setPassword(e.target.value)}
                 placeholder="Enter your password"
                 className="input-dark pr-10"
-                autoComplete="current-password"
+                autoComplete={isSignUp ? 'new-password' : 'current-password'}
                 required
+                minLength={6}
               />
               <button
                 type="button"
@@ -105,6 +134,9 @@ export function LoginPage({ onLogin }: LoginPageProps) {
                 {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
               </button>
             </div>
+            {isSignUp && (
+              <p className="text-xs text-muted-foreground">Password must be at least 6 characters</p>
+            )}
           </div>
 
           <Button
@@ -112,9 +144,19 @@ export function LoginPage({ onLogin }: LoginPageProps) {
             className="w-full gradient-primary text-primary-foreground font-semibold btn-glow transition-all"
             disabled={isLoading}
           >
-            {isLoading ? 'Authenticating...' : 'Sign In'}
+            {isLoading ? (isSignUp ? 'Creating Account...' : 'Signing In...') : (isSignUp ? 'Create Account' : 'Sign In')}
           </Button>
         </form>
+
+        <div className="mt-6 text-center">
+          <button
+            type="button"
+            onClick={() => setIsSignUp(!isSignUp)}
+            className="text-sm text-muted-foreground hover:text-foreground transition-colors"
+          >
+            {isSignUp ? 'Already have an account? Sign in' : "Don't have an account? Sign up"}
+          </button>
+        </div>
 
         <p className="text-center text-muted-foreground text-sm mt-6">
           Secure access to sales analytics
