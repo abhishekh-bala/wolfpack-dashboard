@@ -21,14 +21,14 @@
     --primary-foreground: 220 20% 7%;
 
     /* Muted Steel */
-    --secondary: 220 15% 18%;
+    --secondary: 220 15% 22%;
     --secondary-foreground: 210 30% 90%;
 
-    --muted: 220 15% 15%;
-    --muted-foreground: 215 15% 55%;
+    --muted: 220 15% 18%;
+    --muted-foreground: 215 15% 60%;
 
-    /* Accent - Cyan Glow */
-    --accent: 180 100% 45%;
+    /* Accent - Brighter for hover visibility */
+    --accent: 220 20% 28%;
     --accent-foreground: 220 20% 7%;
 
     /* Status Colors */

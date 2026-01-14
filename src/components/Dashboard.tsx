@@ -37,14 +37,19 @@ interface DashboardProps {
 export function Dashboard({ onLogout }: DashboardProps) {
   const rootRef = useRef<HTMLDivElement>(null);
 
-  // Published data from database (persistent)
-  const [publishedData, setPublishedData] = useState<ParsedMhtmlData | null>(null);
-  const [publishedOverrides, setPublishedOverrides] = useState<Record<string, Partial<SalesData>>>({});
+  // Published data from database (persistent) - separate for daily and monthly
+  const [publishedDailyData, setPublishedDailyData] = useState<ParsedMhtmlData | null>(null);
+  const [publishedDailyOverrides, setPublishedDailyOverrides] = useState<Record<string, Partial<SalesData>>>({});
+  const [publishedMonthlyData, setPublishedMonthlyData] = useState<ParsedMhtmlData | null>(null);
+  const [publishedMonthlyOverrides, setPublishedMonthlyOverrides] = useState<Record<string, Partial<SalesData>>>({});
   
-  // Local data from file upload (temporary, not persisted until published)
-  const [localParsedData, setLocalParsedData] = useState<ParsedMhtmlData | null>(null);
-  const [localKpiOverrides, setLocalKpiOverrides] = useState<Record<string, Partial<SalesData>>>({});
-  const [hasLocalChanges, setHasLocalChanges] = useState(false);
+  // Local data from file upload (temporary, not persisted until published) - separate for daily and monthly
+  const [localDailyData, setLocalDailyData] = useState<ParsedMhtmlData | null>(null);
+  const [localDailyOverrides, setLocalDailyOverrides] = useState<Record<string, Partial<SalesData>>>({});
+  const [localMonthlyData, setLocalMonthlyData] = useState<ParsedMhtmlData | null>(null);
+  const [localMonthlyOverrides, setLocalMonthlyOverrides] = useState<Record<string, Partial<SalesData>>>({});
+  const [hasDailyChanges, setHasDailyChanges] = useState(false);
+  const [hasMonthlyChanges, setHasMonthlyChanges] = useState(false);
   
   const [isProcessing, setIsProcessing] = useState(false);
   const [isPublishing, setIsPublishing] = useState(false);
@@ -63,24 +68,32 @@ export function Dashboard({ onLogout }: DashboardProps) {
     resetFormulas,
   } = useGuideTargets();
 
-  // Load published data from database on mount
+  // Load published data from database on mount (both daily and monthly)
   useEffect(() => {
     const loadPublishedData = async () => {
       try {
         const { data, error } = await supabase
           .from('published_sales_data')
           .select('*')
-          .order('published_at', { ascending: false })
-          .limit(1)
-          .single();
+          .order('published_at', { ascending: false });
 
         if (error && error.code !== 'PGRST116') {
           console.error('Error loading published data:', error);
         }
 
         if (data) {
-          setPublishedData(data.sales_data as unknown as ParsedMhtmlData);
-          setPublishedOverrides((data.kpi_overrides as Record<string, Partial<SalesData>>) || {});
+          // Find daily and monthly reports
+          const dailyReport = data.find((d: any) => d.report_type === 'daily');
+          const monthlyReport = data.find((d: any) => d.report_type === 'monthly');
+          
+          if (dailyReport) {
+            setPublishedDailyData(dailyReport.sales_data as unknown as ParsedMhtmlData);
+            setPublishedDailyOverrides((dailyReport.kpi_overrides as Record<string, Partial<SalesData>>) || {});
+          }
+          if (monthlyReport) {
+            setPublishedMonthlyData(monthlyReport.sales_data as unknown as ParsedMhtmlData);
+            setPublishedMonthlyOverrides((monthlyReport.kpi_overrides as Record<string, Partial<SalesData>>) || {});
+          }
         }
       } catch (err) {
         console.error('Failed to load published data:', err);
@@ -92,7 +105,13 @@ export function Dashboard({ onLogout }: DashboardProps) {
     loadPublishedData();
   }, []);
 
-  // The active data is local if we have local changes, otherwise published
+  // The active data is based on view mode and local changes
+  const hasLocalChanges = viewMode === 'day' ? hasDailyChanges : hasMonthlyChanges;
+  const publishedData = viewMode === 'day' ? publishedDailyData : publishedMonthlyData;
+  const publishedOverrides = viewMode === 'day' ? publishedDailyOverrides : publishedMonthlyOverrides;
+  const localParsedData = viewMode === 'day' ? localDailyData : localMonthlyData;
+  const localKpiOverrides = viewMode === 'day' ? localDailyOverrides : localMonthlyOverrides;
+  
   const parsedData = hasLocalChanges ? localParsedData : publishedData;
   const kpiOverrides = hasLocalChanges ? localKpiOverrides : publishedOverrides;
 
@@ -165,12 +184,19 @@ export function Dashboard({ onLogout }: DashboardProps) {
     setIsProcessing(true);
     try {
       const data = parseMhtml(content);
-      setLocalParsedData(data);
-      setLocalKpiOverrides({});
-      setHasLocalChanges(true);
+      // Store in the current view mode's local state
+      if (viewMode === 'day') {
+        setLocalDailyData(data);
+        setLocalDailyOverrides({});
+        setHasDailyChanges(true);
+      } else {
+        setLocalMonthlyData(data);
+        setLocalMonthlyOverrides({});
+        setHasMonthlyChanges(true);
+      }
       toast({
         title: 'File Parsed Successfully',
-        description: `Found ${data.salesData.length} employees. Click "Publish" to save permanently.`,
+        description: `Found ${data.salesData.length} employees. Click "Publish ${viewMode === 'day' ? 'Daily' : 'Monthly'}" to save permanently.`,
       });
     } catch (error) {
       console.error('Parse error:', error);
@@ -193,46 +219,62 @@ export function Dashboard({ onLogout }: DashboardProps) {
   };
 
   const handleClearData = () => {
-    // Clear local changes, revert to published data
-    setLocalParsedData(null);
-    setLocalKpiOverrides({});
-    setHasLocalChanges(false);
+    // Clear local changes for current view mode, revert to published data
+    if (viewMode === 'day') {
+      setLocalDailyData(null);
+      setLocalDailyOverrides({});
+      setHasDailyChanges(false);
+    } else {
+      setLocalMonthlyData(null);
+      setLocalMonthlyOverrides({});
+      setHasMonthlyChanges(false);
+    }
     toast({
       title: 'Local Changes Discarded',
       description: publishedData ? 'Reverted to published data.' : 'Upload a new file to continue.',
     });
   };
 
-  // Publish data to Supabase database
+  // Publish data to Supabase database for current view mode
   const handlePublishData = async () => {
     const dataToPublish = hasLocalChanges ? localParsedData : publishedData;
     const overridesToPublish = hasLocalChanges ? localKpiOverrides : publishedOverrides;
+    const reportType = viewMode === 'day' ? 'daily' : 'monthly';
     
     if (!dataToPublish) return;
     
     setIsPublishing(true);
     try {
-      // Delete existing published data
-      await supabase.from('published_sales_data').delete().neq('id', '00000000-0000-0000-0000-000000000000');
+      // Delete existing published data for this report type only
+      await supabase.from('published_sales_data').delete().eq('report_type', reportType);
       
-      // Insert new published data
+      // Insert new published data with report_type
       const { error } = await supabase.from('published_sales_data').insert([{
         sales_data: JSON.parse(JSON.stringify(dataToPublish)),
         kpi_overrides: JSON.parse(JSON.stringify(overridesToPublish)),
+        report_type: reportType,
       }]);
 
       if (error) throw error;
 
-      // Update published state and clear local changes
-      setPublishedData(dataToPublish);
-      setPublishedOverrides(overridesToPublish);
-      setLocalParsedData(null);
-      setLocalKpiOverrides({});
-      setHasLocalChanges(false);
+      // Update published state and clear local changes for current view mode
+      if (viewMode === 'day') {
+        setPublishedDailyData(dataToPublish);
+        setPublishedDailyOverrides(overridesToPublish);
+        setLocalDailyData(null);
+        setLocalDailyOverrides({});
+        setHasDailyChanges(false);
+      } else {
+        setPublishedMonthlyData(dataToPublish);
+        setPublishedMonthlyOverrides(overridesToPublish);
+        setLocalMonthlyData(null);
+        setLocalMonthlyOverrides({});
+        setHasMonthlyChanges(false);
+      }
       
       toast({
-        title: 'Data Published!',
-        description: 'Dashboard data saved to database. It will persist across sessions.',
+        title: `${viewMode === 'day' ? 'Daily' : 'Monthly'} Data Published!`,
+        description: `${viewMode === 'day' ? 'Daily' : 'Monthly'} dashboard data saved to database.`,
       });
     } catch (error) {
       console.error('Publish error:', error);
@@ -260,8 +302,12 @@ export function Dashboard({ onLogout }: DashboardProps) {
 
   // Handle KPI override for an agent (updates local state)
   const handleKpiOverride = (agentName: string, field: keyof SalesData, value: number) => {
+    const setLocalData = viewMode === 'day' ? setLocalDailyData : setLocalMonthlyData;
+    const setLocalOverrides = viewMode === 'day' ? setLocalDailyOverrides : setLocalMonthlyOverrides;
+    const setHasChanges = viewMode === 'day' ? setHasDailyChanges : setHasMonthlyChanges;
+    
     if (hasLocalChanges) {
-      setLocalKpiOverrides(prev => ({
+      setLocalOverrides(prev => ({
         ...prev,
         [agentName]: {
           ...prev[agentName],
@@ -270,8 +316,8 @@ export function Dashboard({ onLogout }: DashboardProps) {
       }));
     } else {
       // If editing published data, switch to local mode
-      setLocalParsedData(publishedData);
-      setLocalKpiOverrides(prev => ({
+      setLocalData(publishedData);
+      setLocalOverrides(prev => ({
         ...publishedOverrides,
         ...prev,
         [agentName]: {
@@ -280,26 +326,30 @@ export function Dashboard({ onLogout }: DashboardProps) {
           [field]: value,
         },
       }));
-      setHasLocalChanges(true);
+      setHasChanges(true);
     }
   };
 
   // Clear override for an agent
   const clearAgentOverride = (agentName: string) => {
+    const setLocalData = viewMode === 'day' ? setLocalDailyData : setLocalMonthlyData;
+    const setLocalOverrides = viewMode === 'day' ? setLocalDailyOverrides : setLocalMonthlyOverrides;
+    const setHasChanges = viewMode === 'day' ? setHasDailyChanges : setHasMonthlyChanges;
+    
     if (hasLocalChanges) {
-      setLocalKpiOverrides(prev => {
+      setLocalOverrides(prev => {
         const newOverrides = { ...prev };
         delete newOverrides[agentName];
         return newOverrides;
       });
     } else {
-      setLocalParsedData(publishedData);
-      setLocalKpiOverrides(() => {
+      setLocalData(publishedData);
+      setLocalOverrides(() => {
         const newOverrides = { ...publishedOverrides };
         delete newOverrides[agentName];
         return newOverrides;
       });
-      setHasLocalChanges(true);
+      setHasChanges(true);
     }
   };
 
@@ -461,17 +511,17 @@ export function Dashboard({ onLogout }: DashboardProps) {
                       size="sm"
                       onClick={handlePublishData}
                       disabled={isPublishing}
-                      className="gap-2 bg-success hover:bg-success/90 text-success-foreground"
+                      className="gap-2 bg-success hover:bg-success/80 text-success-foreground"
                     >
                       {isPublishing ? <Loader2 className="w-4 h-4 animate-spin" /> : <Upload className="w-4 h-4" />}
-                      Publish to Database
+                      Publish {viewMode === 'day' ? 'Daily' : 'Monthly'}
                     </Button>
                     {hasLocalChanges && (
                       <Button
                         variant="outline"
                         size="sm"
                         onClick={handleClearData}
-                        className="gap-2 border-destructive/30 hover:border-destructive text-destructive"
+                        className="gap-2 border-destructive/30 hover:border-destructive hover:bg-destructive/20 text-destructive"
                       >
                         <RefreshCw className="w-4 h-4" />
                         Discard Changes

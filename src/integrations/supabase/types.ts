@@ -91,6 +91,7 @@ export type Database = {
           id: string
           kpi_overrides: Json | null
           published_at: string
+          report_type: string
           sales_data: Json
           updated_at: string
         }
@@ -98,6 +99,7 @@ export type Database = {
           id?: string
           kpi_overrides?: Json | null
           published_at?: string
+          report_type?: string
           sales_data: Json
           updated_at?: string
         }
@@ -105,6 +107,7 @@ export type Database = {
           id?: string
           kpi_overrides?: Json | null
           published_at?: string
+          report_type?: string
           sales_data?: Json
           updated_at?: string
         }
