@@ -4,6 +4,8 @@ import { SalesTable } from './SalesTable';
 import { StatCard } from './StatCard';
 import { AdminPanel } from './AdminPanel';
 import { PerformanceCharts } from './PerformanceCharts';
+import { FullscreenGraphsView } from './FullscreenGraphsView';
+import { Footer } from './Footer';
 import { parseMhtml, ParsedMhtmlData, SalesData, formatCurrency, formatPercent } from '@/lib/mhtmlParser';
 import { useGuideTargets, GuideTarget } from '@/hooks/useGuideTargets';
 import { useToast } from '@/hooks/use-toast';
@@ -27,6 +29,8 @@ import {
   Users,
   Upload,
   Edit3,
+  Table2,
+  BarChart3,
 } from 'lucide-react';
 import wolfpackLogo from '@/assets/wolfpack-logo.png';
 
@@ -55,6 +59,7 @@ export function Dashboard({ onLogout }: DashboardProps) {
   const [isPublishing, setIsPublishing] = useState(false);
   const [isLoadingPublished, setIsLoadingPublished] = useState(true);
   const [isFullscreen, setIsFullscreen] = useState(false);
+  const [fullscreenView, setFullscreenView] = useState<'table' | 'graphs'>('table');
   const [viewMode, setViewMode] = useState<'day' | 'month'>('day');
   const [editingAgent, setEditingAgent] = useState<string | null>(null);
   const { toast } = useToast();
@@ -445,6 +450,30 @@ export function Dashboard({ onLogout }: DashboardProps) {
                 </button>
               </div>
 
+              {/* Fullscreen View Toggle - Only show when in fullscreen */}
+              {isFullscreen && (
+                <div className="flex items-center gap-1 bg-muted rounded-lg p-1">
+                  <button
+                    onClick={() => setFullscreenView('table')}
+                    className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-medium transition-colors ${
+                      fullscreenView === 'table' ? 'bg-primary text-primary-foreground' : 'text-muted-foreground hover:text-foreground'
+                    }`}
+                  >
+                    <Table2 className="w-3.5 h-3.5" />
+                    Guide View
+                  </button>
+                  <button
+                    onClick={() => setFullscreenView('graphs')}
+                    className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-medium transition-colors ${
+                      fullscreenView === 'graphs' ? 'bg-primary text-primary-foreground' : 'text-muted-foreground hover:text-foreground'
+                    }`}
+                  >
+                    <BarChart3 className="w-3.5 h-3.5" />
+                    Graphs
+                  </button>
+                </div>
+              )}
+
               {/* Fullscreen Toggle */}
               <Button
                 variant="outline"
@@ -619,29 +648,38 @@ export function Dashboard({ onLogout }: DashboardProps) {
               </div>
             </section>
 
-            {/* Sales Table */}
-            <section className="animate-fade-in" style={{ animationDelay: '100ms' }}>
-              <div className="flex items-center gap-3 mb-4">
-                <div className={`rounded-lg flex items-center justify-center ${isFullscreen ? 'w-10 h-10 bg-accent/20' : 'w-8 h-8 bg-accent/20'}`}>
-                  <TrendingUp className={`text-accent ${isFullscreen ? 'w-5 h-5' : 'w-4 h-4'}`} />
-                </div>
-                <h2 className={`font-semibold text-foreground ${isFullscreen ? 'text-2xl' : 'text-lg'}`}>
-                  Performance Details
-                </h2>
-              </div>
+            {/* Fullscreen Graphs View */}
+            {isFullscreen && fullscreenView === 'graphs' && (
+              <section className="animate-fade-in flex-1" style={{ minHeight: 'calc(100vh - 200px)' }}>
+                <FullscreenGraphsView salesData={effectiveSalesData} targets={targets} viewMode={viewMode} />
+              </section>
+            )}
 
-              <SalesTable 
-                salesData={effectiveSalesData} 
-                targets={targets} 
-                isFullscreen={isFullscreen} 
-                viewMode={viewMode}
-                kpiOverrides={kpiOverrides}
-                onKpiOverride={handleKpiOverride}
-                onClearOverride={clearAgentOverride}
-                editingAgent={editingAgent}
-                onEditAgent={setEditingAgent}
-              />
-            </section>
+            {/* Sales Table - Show in normal mode or fullscreen table view */}
+            {(!isFullscreen || fullscreenView === 'table') && (
+              <section className="animate-fade-in" style={{ animationDelay: '100ms' }}>
+                <div className="flex items-center gap-3 mb-4">
+                  <div className={`rounded-lg flex items-center justify-center ${isFullscreen ? 'w-10 h-10 bg-accent/20' : 'w-8 h-8 bg-accent/20'}`}>
+                    <TrendingUp className={`text-accent ${isFullscreen ? 'w-5 h-5' : 'w-4 h-4'}`} />
+                  </div>
+                  <h2 className={`font-semibold text-foreground ${isFullscreen ? 'text-2xl' : 'text-lg'}`}>
+                    Performance Details
+                  </h2>
+                </div>
+
+                <SalesTable 
+                  salesData={effectiveSalesData} 
+                  targets={targets} 
+                  isFullscreen={isFullscreen} 
+                  viewMode={viewMode}
+                  kpiOverrides={kpiOverrides}
+                  onKpiOverride={handleKpiOverride}
+                  onClearOverride={clearAgentOverride}
+                  editingAgent={editingAgent}
+                  onEditAgent={setEditingAgent}
+                />
+              </section>
+            )}
 
             {/* Charts Section - Hidden in fullscreen */}
             {!isFullscreen && (
@@ -667,13 +705,7 @@ export function Dashboard({ onLogout }: DashboardProps) {
       </main>
 
       {/* Footer - Hidden in fullscreen */}
-      {!isFullscreen && (
-        <footer className="border-t border-border mt-12 py-6">
-          <div className="container mx-auto px-4 text-center text-sm text-muted-foreground">
-            <span className="text-gradient font-semibold">Team WolfPack</span> Sales Dashboard • {new Date().getFullYear()}
-          </div>
-        </footer>
-      )}
+      {!isFullscreen && <Footer />}
     </div>
   );
 }
