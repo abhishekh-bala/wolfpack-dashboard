@@ -6,6 +6,7 @@ import { AdminPanel } from './AdminPanel';
 import { PerformanceCharts } from './PerformanceCharts';
 import { FullscreenGraphsView } from './FullscreenGraphsView';
 import { Footer } from './Footer';
+import { FloatingOrbs } from './FloatingOrbs';
 import { parseMhtml, ParsedMhtmlData, SalesData, formatCurrency, formatPercent } from '@/lib/mhtmlParser';
 import { useGuideTargets, GuideTarget } from '@/hooks/useGuideTargets';
 import { useToast } from '@/hooks/use-toast';
@@ -389,11 +390,13 @@ export function Dashboard({ onLogout }: DashboardProps) {
   return (
     <div
       ref={rootRef}
-      className={`min-h-screen bg-background transition-all duration-300 ${isFullscreen ? 'fullscreen-mode' : ''}`}
+      className={`min-h-screen bg-background transition-all duration-300 relative overflow-hidden ${isFullscreen ? 'fullscreen-mode' : ''}`}
     >
+      {/* Dynamic floating orbs background */}
+      <FloatingOrbs />
       {/* Header */}
       <header
-        className={`border-b border-border backdrop-blur-xl transition-all duration-300 ${
+        className={`relative z-10 border-b border-border backdrop-blur-xl transition-all duration-300 ${
           isFullscreen ? 'bg-card/95' : 'bg-card/80'
         }`}
       >
@@ -516,7 +519,7 @@ export function Dashboard({ onLogout }: DashboardProps) {
         </div>
       </header>
 
-      <main className={`mx-auto px-4 ${isFullscreen ? 'max-w-none py-6 space-y-6' : 'container py-6 space-y-6'}`}>
+      <main className={`relative z-10 mx-auto px-4 ${isFullscreen ? 'max-w-none py-6 space-y-6' : 'container py-6 space-y-6'}`}>
         {/* File Upload Section - Hidden in fullscreen */}
         {!isFullscreen && (
           <section className="glass-card p-6">

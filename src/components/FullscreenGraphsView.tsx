@@ -182,13 +182,13 @@ export function FullscreenGraphsView({ salesData, targets, viewMode }: Fullscree
   };
 
   return (
-    <div className="h-full flex flex-col gap-4">
+    <div className="h-full flex flex-col gap-4" style={{ minHeight: '600px' }}>
       {/* Chart Type Selector */}
       <div className="flex justify-center gap-2">
         <button
           onClick={() => setChartType('bar')}
           className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
-            chartType === 'bar' ? 'bg-primary text-primary-foreground' : 'bg-muted text-muted-foreground hover:bg-muted/70'
+            chartType === 'bar' ? 'bg-primary text-primary-foreground' : 'bg-secondary text-secondary-foreground hover:bg-secondary/80'
           }`}
         >
           <BarChart3 className="w-4 h-4" />
@@ -197,7 +197,7 @@ export function FullscreenGraphsView({ salesData, targets, viewMode }: Fullscree
         <button
           onClick={() => setChartType('line')}
           className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
-            chartType === 'line' ? 'bg-primary text-primary-foreground' : 'bg-muted text-muted-foreground hover:bg-muted/70'
+            chartType === 'line' ? 'bg-primary text-primary-foreground' : 'bg-secondary text-secondary-foreground hover:bg-secondary/80'
           }`}
         >
           <LineChartIcon className="w-4 h-4" />
@@ -206,7 +206,7 @@ export function FullscreenGraphsView({ salesData, targets, viewMode }: Fullscree
         <button
           onClick={() => setChartType('pie')}
           className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
-            chartType === 'pie' ? 'bg-primary text-primary-foreground' : 'bg-muted text-muted-foreground hover:bg-muted/70'
+            chartType === 'pie' ? 'bg-primary text-primary-foreground' : 'bg-secondary text-secondary-foreground hover:bg-secondary/80'
           }`}
         >
           <PieChartIcon className="w-4 h-4" />
@@ -215,13 +215,13 @@ export function FullscreenGraphsView({ salesData, targets, viewMode }: Fullscree
       </div>
 
       {/* 4 KPI Grid */}
-      <div className="flex-1 grid grid-cols-2 gap-4">
+      <div className="flex-1 grid grid-cols-2 gap-4" style={{ minHeight: '500px' }}>
         {METRICS.map((metric) => (
-          <div key={metric} className="glass-card p-4 flex flex-col glow-primary ring-1 ring-primary/20">
+          <div key={metric} className="glass-card p-4 flex flex-col glow-primary ring-1 ring-primary/20" style={{ minHeight: '240px' }}>
             <h3 className="text-lg font-semibold text-foreground mb-2 text-center">
               {METRIC_CONFIG[metric].label}
             </h3>
-            <div className="flex-1 min-h-0">
+            <div className="flex-1" style={{ minHeight: '180px' }}>
               {renderChart(metric)}
             </div>
           </div>
