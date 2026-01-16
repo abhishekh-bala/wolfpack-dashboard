@@ -5,6 +5,7 @@ import { Label } from '@/components/ui/label';
 import { Eye, EyeOff, Shield } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
+import { FloatingOrbs } from './FloatingOrbs';
 
 interface LoginPageProps {
   onLogin: () => void;
@@ -15,7 +16,6 @@ export function LoginPage({ onLogin }: LoginPageProps) {
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
-  const [isSignUp, setIsSignUp] = useState(false);
   const { toast } = useToast();
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -23,49 +23,23 @@ export function LoginPage({ onLogin }: LoginPageProps) {
     setIsLoading(true);
 
     try {
-      if (isSignUp) {
-        // Sign up new user
-        const { data, error } = await supabase.auth.signUp({
-          email,
-          password,
-          options: {
-            emailRedirectTo: window.location.origin,
-          },
-        });
+      const { data, error } = await supabase.auth.signInWithPassword({
+        email,
+        password,
+      });
 
-        if (error) {
-          toast({
-            title: 'Sign Up Failed',
-            description: error.message,
-            variant: 'destructive',
-          });
-        } else if (data.user) {
-          toast({
-            title: 'Account Created!',
-            description: 'You are now signed in.',
-          });
-          onLogin();
-        }
-      } else {
-        // Sign in existing user
-        const { data, error } = await supabase.auth.signInWithPassword({
-          email,
-          password,
+      if (error) {
+        toast({
+          title: 'Authentication Failed',
+          description: error.message,
+          variant: 'destructive',
         });
-
-        if (error) {
-          toast({
-            title: 'Authentication Failed',
-            description: error.message,
-            variant: 'destructive',
-          });
-        } else if (data.user) {
-          toast({
-            title: 'Welcome back!',
-            description: 'Successfully authenticated.',
-          });
-          onLogin();
-        }
+      } else if (data.user) {
+        toast({
+          title: 'Welcome back!',
+          description: 'Successfully authenticated.',
+        });
+        onLogin();
       }
     } catch (err) {
       toast({
@@ -79,15 +53,14 @@ export function LoginPage({ onLogin }: LoginPageProps) {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center p-4">
+    <div className="min-h-screen flex items-center justify-center p-4 relative overflow-hidden">
       {/* Background gradient */}
-      <div className="absolute inset-0 bg-gradient-to-br from-background via-background to-secondary/20" />
+      <div className="absolute inset-0 bg-gradient-to-br from-background via-background to-secondary/20 z-0" />
       
-      {/* Animated glow orb */}
-      <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-primary/10 rounded-full blur-3xl animate-pulse-slow" />
-      <div className="absolute bottom-1/4 right-1/4 w-64 h-64 bg-accent/10 rounded-full blur-3xl animate-pulse-slow" />
+      {/* Dynamic floating orbs */}
+      <FloatingOrbs />
 
-      <div className="relative glass-card w-full max-w-md p-8 animate-fade-in">
+      <div className="relative z-10 glass-card w-full max-w-md p-8 animate-fade-in">
         {/* Logo/Header */}
         <div className="text-center mb-8">
           <div className="inline-flex items-center justify-center w-16 h-16 rounded-full gradient-primary mb-4 glow-primary">
@@ -122,7 +95,7 @@ export function LoginPage({ onLogin }: LoginPageProps) {
                 onChange={(e) => setPassword(e.target.value)}
                 placeholder="Enter your password"
                 className="input-dark pr-10"
-                autoComplete={isSignUp ? 'new-password' : 'current-password'}
+                autoComplete="current-password"
                 required
                 minLength={6}
               />
@@ -134,9 +107,6 @@ export function LoginPage({ onLogin }: LoginPageProps) {
                 {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
               </button>
             </div>
-            {isSignUp && (
-              <p className="text-xs text-muted-foreground">Password must be at least 6 characters</p>
-            )}
           </div>
 
           <Button
@@ -144,19 +114,9 @@ export function LoginPage({ onLogin }: LoginPageProps) {
             className="w-full gradient-primary text-primary-foreground font-semibold btn-glow transition-all"
             disabled={isLoading}
           >
-            {isLoading ? (isSignUp ? 'Creating Account...' : 'Signing In...') : (isSignUp ? 'Create Account' : 'Sign In')}
+            {isLoading ? 'Signing In...' : 'Sign In'}
           </Button>
         </form>
-
-        <div className="mt-6 text-center">
-          <button
-            type="button"
-            onClick={() => setIsSignUp(!isSignUp)}
-            className="text-sm text-muted-foreground hover:text-foreground transition-colors"
-          >
-            {isSignUp ? 'Already have an account? Sign in' : "Don't have an account? Sign up"}
-          </button>
-        </div>
 
         <p className="text-center text-muted-foreground text-sm mt-6">
           Secure access to sales analytics

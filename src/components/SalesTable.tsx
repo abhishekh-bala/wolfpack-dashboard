@@ -1,7 +1,7 @@
 import { useMemo, useState } from 'react';
 import { SalesData, formatCurrency, formatPercent } from '@/lib/mhtmlParser';
 import { GuideTarget } from '@/hooks/useGuideTargets';
-import { TrendingDown, TrendingUp, Minus, AlertCircle, Edit3, Check, X } from 'lucide-react';
+import { TrendingDown, TrendingUp, Minus, AlertCircle, Edit3, Check, X, ArrowUpDown, ArrowUp, ArrowDown } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import {
@@ -12,6 +12,9 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
+
+type SortField = 'name' | 'orders' | 'newRevenue' | 'revenueDeficit' | 'orderDeficit' | 'chatCount' | 'nrpc' | 'currentConversion' | 'ordersToTarget';
+type SortDirection = 'asc' | 'desc';
 
 interface ComputedData extends SalesData {
   targetRevenue: number;
@@ -58,6 +61,24 @@ export function SalesTable({
   onEditAgent,
 }: SalesTableProps) {
   const [editValues, setEditValues] = useState<Partial<SalesData>>({});
+  const [sortField, setSortField] = useState<SortField>('newRevenue');
+  const [sortDirection, setSortDirection] = useState<SortDirection>('desc');
+
+  const handleSort = (field: SortField) => {
+    if (sortField === field) {
+      setSortDirection(prev => prev === 'asc' ? 'desc' : 'asc');
+    } else {
+      setSortField(field);
+      setSortDirection('desc');
+    }
+  };
+
+  const SortIcon = ({ field }: { field: SortField }) => {
+    if (sortField !== field) return <ArrowUpDown className="w-3 h-3 ml-1 opacity-50" />;
+    return sortDirection === 'asc' 
+      ? <ArrowUp className="w-3 h-3 ml-1 text-primary" />
+      : <ArrowDown className="w-3 h-3 ml-1 text-primary" />;
+  };
   
   const computedData = useMemo(() => {
     const dataMap = new Map<string, SalesData>();
@@ -135,9 +156,59 @@ export function SalesTable({
       }
     });
 
-    // Sort by new revenue descending
-    return result.sort((a, b) => b.newRevenue - a.newRevenue);
-  }, [salesData, targets, viewMode]);
+    // Sort by selected field and direction
+    return result.sort((a, b) => {
+      let aVal: number | string;
+      let bVal: number | string;
+
+      switch (sortField) {
+        case 'name':
+          aVal = a.name.toLowerCase();
+          bVal = b.name.toLowerCase();
+          break;
+        case 'orders':
+          aVal = a.orders;
+          bVal = b.orders;
+          break;
+        case 'newRevenue':
+          aVal = a.newRevenue;
+          bVal = b.newRevenue;
+          break;
+        case 'revenueDeficit':
+          aVal = a.revenueDeficit;
+          bVal = b.revenueDeficit;
+          break;
+        case 'orderDeficit':
+          aVal = a.orderDeficit;
+          bVal = b.orderDeficit;
+          break;
+        case 'chatCount':
+          aVal = a.chatCount;
+          bVal = b.chatCount;
+          break;
+        case 'nrpc':
+          aVal = a.nrpc;
+          bVal = b.nrpc;
+          break;
+        case 'currentConversion':
+          aVal = a.currentConversion;
+          bVal = b.currentConversion;
+          break;
+        case 'ordersToTarget':
+          aVal = a.ordersToTarget;
+          bVal = b.ordersToTarget;
+          break;
+        default:
+          aVal = a.newRevenue;
+          bVal = b.newRevenue;
+      }
+
+      if (typeof aVal === 'string' && typeof bVal === 'string') {
+        return sortDirection === 'asc' ? aVal.localeCompare(bVal) : bVal.localeCompare(aVal);
+      }
+      return sortDirection === 'asc' ? (aVal as number) - (bVal as number) : (bVal as number) - (aVal as number);
+    });
+  }, [salesData, targets, viewMode, sortField, sortDirection]);
 
   const DeficitCell = ({ value, isCurrency = false }: { value: number; isCurrency?: boolean }) => {
     const isGood = value <= 0;
@@ -176,18 +247,63 @@ export function SalesTable({
         <Table className={compact ? 'text-xs' : ''}>
           <TableHeader>
             <TableRow className={`hover:bg-muted/50 ${isFullscreen ? 'bg-muted/30' : 'bg-gradient-to-r from-muted/50 via-muted/30 to-muted/50'}`}>
-              <TableHead className={`text-foreground font-bold ${isFullscreen ? 'text-sm py-4' : compact ? 'py-2' : ''}`}>Name</TableHead>
-              <TableHead className={`text-foreground font-bold text-center ${isFullscreen ? 'text-sm py-4' : compact ? 'py-2' : ''}`}>New Orders</TableHead>
-              <TableHead className={`text-foreground font-bold text-right ${isFullscreen ? 'text-sm py-4' : compact ? 'py-2' : ''}`}>New Revenue</TableHead>
+              <TableHead 
+                className={`text-foreground font-bold cursor-pointer hover:text-primary transition-colors ${isFullscreen ? 'text-sm py-4' : compact ? 'py-2' : ''}`}
+                onClick={() => handleSort('name')}
+              >
+                <div className="flex items-center">Name<SortIcon field="name" /></div>
+              </TableHead>
+              <TableHead 
+                className={`text-foreground font-bold text-center cursor-pointer hover:text-primary transition-colors ${isFullscreen ? 'text-sm py-4' : compact ? 'py-2' : ''}`}
+                onClick={() => handleSort('orders')}
+              >
+                <div className="flex items-center justify-center">New Orders<SortIcon field="orders" /></div>
+              </TableHead>
+              <TableHead 
+                className={`text-foreground font-bold text-right cursor-pointer hover:text-primary transition-colors ${isFullscreen ? 'text-sm py-4' : compact ? 'py-2' : ''}`}
+                onClick={() => handleSort('newRevenue')}
+              >
+                <div className="flex items-center justify-end">New Revenue<SortIcon field="newRevenue" /></div>
+              </TableHead>
               <TableHead className={`text-foreground font-bold text-right ${isFullscreen ? 'text-sm py-4' : compact ? 'py-2' : ''}`}>Target Rev</TableHead>
-              <TableHead className={`text-foreground font-bold text-right ${isFullscreen ? 'text-sm py-4' : compact ? 'py-2' : ''}`}>Rev Deficit</TableHead>
+              <TableHead 
+                className={`text-foreground font-bold text-right cursor-pointer hover:text-primary transition-colors ${isFullscreen ? 'text-sm py-4' : compact ? 'py-2' : ''}`}
+                onClick={() => handleSort('revenueDeficit')}
+              >
+                <div className="flex items-center justify-end">Rev Deficit<SortIcon field="revenueDeficit" /></div>
+              </TableHead>
               <TableHead className={`text-foreground font-bold text-center ${isFullscreen ? 'text-sm py-4' : compact ? 'py-2' : ''}`}>Target Ord</TableHead>
-              <TableHead className={`text-foreground font-bold text-center ${isFullscreen ? 'text-sm py-4' : compact ? 'py-2' : ''}`}>Ord Deficit</TableHead>
-              <TableHead className={`text-foreground font-bold text-center ${isFullscreen ? 'text-sm py-4' : compact ? 'py-2' : ''}`}>Chats</TableHead>
-              <TableHead className={`text-foreground font-bold text-center ${isFullscreen ? 'text-sm py-4' : compact ? 'py-2' : ''}`}>NRPC</TableHead>
-              <TableHead className={`text-foreground font-bold text-center ${isFullscreen ? 'text-sm py-4' : compact ? 'py-2' : ''}`}>NewConv %</TableHead>
+              <TableHead 
+                className={`text-foreground font-bold text-center cursor-pointer hover:text-primary transition-colors ${isFullscreen ? 'text-sm py-4' : compact ? 'py-2' : ''}`}
+                onClick={() => handleSort('orderDeficit')}
+              >
+                <div className="flex items-center justify-center">Ord Deficit<SortIcon field="orderDeficit" /></div>
+              </TableHead>
+              <TableHead 
+                className={`text-foreground font-bold text-center cursor-pointer hover:text-primary transition-colors ${isFullscreen ? 'text-sm py-4' : compact ? 'py-2' : ''}`}
+                onClick={() => handleSort('chatCount')}
+              >
+                <div className="flex items-center justify-center">Chats<SortIcon field="chatCount" /></div>
+              </TableHead>
+              <TableHead 
+                className={`text-foreground font-bold text-center cursor-pointer hover:text-primary transition-colors ${isFullscreen ? 'text-sm py-4' : compact ? 'py-2' : ''}`}
+                onClick={() => handleSort('nrpc')}
+              >
+                <div className="flex items-center justify-center">NRPC<SortIcon field="nrpc" /></div>
+              </TableHead>
+              <TableHead 
+                className={`text-foreground font-bold text-center cursor-pointer hover:text-primary transition-colors ${isFullscreen ? 'text-sm py-4' : compact ? 'py-2' : ''}`}
+                onClick={() => handleSort('currentConversion')}
+              >
+                <div className="flex items-center justify-center">NewConv %<SortIcon field="currentConversion" /></div>
+              </TableHead>
               <TableHead className={`text-foreground font-bold text-center ${isFullscreen ? 'text-sm py-4' : compact ? 'py-2' : ''}`}>Target %</TableHead>
-              <TableHead className={`text-foreground font-bold text-center ${isFullscreen ? 'text-sm py-4' : compact ? 'py-2' : ''}`}>Need</TableHead>
+              <TableHead 
+                className={`text-foreground font-bold text-center cursor-pointer hover:text-primary transition-colors ${isFullscreen ? 'text-sm py-4' : compact ? 'py-2' : ''}`}
+                onClick={() => handleSort('ordersToTarget')}
+              >
+                <div className="flex items-center justify-center">Need<SortIcon field="ordersToTarget" /></div>
+              </TableHead>
               {onKpiOverride && (
                 <TableHead className={`text-foreground font-bold text-center ${isFullscreen ? 'text-sm py-4' : compact ? 'py-2' : ''}`}>Actions</TableHead>
               )}
