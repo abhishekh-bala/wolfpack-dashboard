@@ -138,10 +138,22 @@ export function FullscreenGraphsView({ salesData, targets, viewMode }: Fullscree
               ))}
             </Pie>
             <Tooltip
-              formatter={(val: number) => formatValue(metric, val)}
-              contentStyle={{ background: 'hsl(220, 18%, 12%)', border: '1px solid hsl(220, 15%, 25%)', borderRadius: 8 }}
-              labelStyle={{ color: 'hsl(210, 40%, 98%)' }}
-              itemStyle={{ color: 'hsl(210, 40%, 98%)' }}
+              formatter={(val: number) => [formatValue(metric, val), '']}
+              contentStyle={{ background: 'hsl(220, 18%, 12%)', border: '1px solid hsl(220, 15%, 25%)', borderRadius: 8, color: '#ffffff' }}
+              labelStyle={{ color: '#ffffff' }}
+              itemStyle={{ color: '#ffffff' }}
+              wrapperStyle={{ color: '#ffffff' }}
+              cursor={{ fill: 'rgba(255, 255, 255, 0.1)' }}
+              content={({ active, payload }) => {
+                if (active && payload && payload.length) {
+                  return (
+                    <div style={{ background: 'hsl(220, 18%, 12%)', border: '1px solid hsl(220, 15%, 25%)', borderRadius: 8, padding: '8px 12px' }}>
+                      <p style={{ color: '#ffffff', margin: 0 }}>{payload[0].name}: {formatValue(metric, payload[0].value as number)}</p>
+                    </div>
+                  );
+                }
+                return null;
+              }}
             />
             <Legend
               formatter={(value) => <span style={{ color: 'hsl(215, 15%, 75%)', fontSize: 10 }}>{value}</span>}
