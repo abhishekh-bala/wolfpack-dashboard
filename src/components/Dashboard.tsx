@@ -10,6 +10,7 @@ import { FloatingOrbs } from './FloatingOrbs';
 import { parseMhtml, ParsedMhtmlData, SalesData, formatCurrency, formatPercent } from '@/lib/mhtmlParser';
 import { useGuideTargets, GuideTarget } from '@/hooks/useGuideTargets';
 import { useToast } from '@/hooks/use-toast';
+import { useUserRole } from '@/hooks/useUserRole';
 import { Button } from '@/components/ui/button';
 import { supabase } from '@/integrations/supabase/client';
 import {
@@ -73,6 +74,8 @@ export function Dashboard({ onLogout }: DashboardProps) {
     saveFormulas,
     resetFormulas,
   } = useGuideTargets();
+
+  const { isAdmin, isLoading: isLoadingRole } = useUserRole();
 
   // Load published data from database on mount (both daily and monthly)
   useEffect(() => {
@@ -359,7 +362,7 @@ export function Dashboard({ onLogout }: DashboardProps) {
     }
   };
 
-  if (isLoading || isLoadingPublished) {
+  if (isLoading || isLoadingPublished || isLoadingRole) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
         <div className="flex flex-col items-center gap-4">
@@ -494,15 +497,17 @@ export function Dashboard({ onLogout }: DashboardProps) {
 
               {!isFullscreen && (
                 <>
-                  <AdminPanel
-                    targets={targets}
-                    formulas={formulas}
-                    onSaveTargets={saveTargets}
-                    onSaveFormulas={saveFormulas}
-                    onResetFormulas={resetFormulas}
-                    viewMode={viewMode}
-                    onViewModeChange={setViewMode}
-                  />
+                  {isAdmin && (
+                    <AdminPanel
+                      targets={targets}
+                      formulas={formulas}
+                      onSaveTargets={saveTargets}
+                      onSaveFormulas={saveFormulas}
+                      onResetFormulas={resetFormulas}
+                      viewMode={viewMode}
+                      onViewModeChange={setViewMode}
+                    />
+                  )}
                   <Button
                     variant="ghost"
                     size="sm"
