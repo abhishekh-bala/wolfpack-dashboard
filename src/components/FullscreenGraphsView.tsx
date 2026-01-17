@@ -111,6 +111,7 @@ export function FullscreenGraphsView({ salesData, targets, viewMode }: Fullscree
               formatter={(val: number) => formatValue(metric, val)}
               contentStyle={{ background: 'hsl(220, 18%, 12%)', border: '1px solid hsl(220, 15%, 25%)', borderRadius: 8 }}
               labelStyle={{ color: 'hsl(210, 40%, 98%)' }}
+              itemStyle={{ color: 'hsl(210, 40%, 98%)' }}
             />
             <Bar dataKey={metric} fill={config.color} radius={[4, 4, 0, 0]} />
           </BarChart>
@@ -140,6 +141,7 @@ export function FullscreenGraphsView({ salesData, targets, viewMode }: Fullscree
               formatter={(val: number) => formatValue(metric, val)}
               contentStyle={{ background: 'hsl(220, 18%, 12%)', border: '1px solid hsl(220, 15%, 25%)', borderRadius: 8 }}
               labelStyle={{ color: 'hsl(210, 40%, 98%)' }}
+              itemStyle={{ color: 'hsl(210, 40%, 98%)' }}
             />
             <Legend
               formatter={(value) => <span style={{ color: 'hsl(215, 15%, 75%)', fontSize: 10 }}>{value}</span>}
@@ -167,6 +169,7 @@ export function FullscreenGraphsView({ salesData, targets, viewMode }: Fullscree
             formatter={(val: number) => formatValue(metric, val)}
             contentStyle={{ background: 'hsl(220, 18%, 12%)', border: '1px solid hsl(220, 15%, 25%)', borderRadius: 8 }}
             labelStyle={{ color: 'hsl(210, 40%, 98%)' }}
+            itemStyle={{ color: 'hsl(210, 40%, 98%)' }}
           />
           <Line
             type="monotone"
