@@ -6,7 +6,7 @@ import { AdminPanel } from './AdminPanel';
 import { PerformanceCharts } from './PerformanceCharts';
 import { FullscreenGraphsView } from './FullscreenGraphsView';
 import { Footer } from './Footer';
-import { FloatingOrbs } from './FloatingOrbs';
+import { ParticleNetwork } from './ParticleNetwork';
 import { parseMhtml, ParsedMhtmlData, SalesData, formatCurrency, formatPercent } from '@/lib/mhtmlParser';
 import { useGuideTargets, GuideTarget } from '@/hooks/useGuideTargets';
 import { useToast } from '@/hooks/use-toast';
@@ -394,8 +394,8 @@ export function Dashboard({ onLogout }: DashboardProps) {
       ref={rootRef}
       className={`min-h-screen bg-background transition-all duration-300 relative overflow-hidden ${isFullscreen ? 'fullscreen-mode' : ''}`}
     >
-      {/* Dynamic floating orbs background */}
-      <FloatingOrbs />
+      {/* Dynamic particle network background */}
+      <ParticleNetwork />
       {/* Header */}
       <header
         className={`relative z-10 border-b border-border backdrop-blur-xl transition-all duration-300 ${

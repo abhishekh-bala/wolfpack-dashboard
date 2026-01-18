@@ -6,7 +6,7 @@ import { Eye, EyeOff } from 'lucide-react';
 import wolfpackLogo from '@/assets/wolfpack-logo.png';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
-import { FloatingOrbs } from './FloatingOrbs';
+import { ParticleNetwork } from './ParticleNetwork';
 
 interface LoginPageProps {
   onLogin: () => void;
@@ -58,8 +58,8 @@ export function LoginPage({ onLogin }: LoginPageProps) {
       {/* Background gradient */}
       <div className="absolute inset-0 bg-gradient-to-br from-background via-background to-secondary/20 z-0" />
       
-      {/* Dynamic floating orbs */}
-      <FloatingOrbs />
+      {/* Dynamic particle network */}
+      <ParticleNetwork />
 
       <div className="relative z-10 glass-card w-full max-w-md p-8 animate-fade-in">
         {/* Logo/Header */}
