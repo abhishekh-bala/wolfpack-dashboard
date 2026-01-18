@@ -144,20 +144,20 @@ export function AdminPanel({
   return (
     <Dialog>
       <DialogTrigger asChild>
-        <Button variant="outline" className="gap-2 border-primary/30 hover:border-primary hover:bg-primary/10">
+        <Button variant="outline" className="gap-1 sm:gap-2 px-2 sm:px-3 border-primary/30 hover:border-primary hover:bg-primary/10 text-xs sm:text-sm">
           <Settings2 className="w-4 h-4" />
-          Admin Panel
+          <span className="hidden sm:inline">Admin Panel</span>
         </Button>
       </DialogTrigger>
-      <DialogContent className="max-w-4xl max-h-[85vh] overflow-hidden flex flex-col bg-card border-border">
+      <DialogContent className="max-w-4xl w-[95vw] sm:w-full max-h-[90vh] sm:max-h-[85vh] overflow-hidden flex flex-col bg-card border-border">
         <DialogHeader>
-          <div className="flex items-center justify-between">
-            <DialogTitle className="text-xl font-bold text-gradient">Admin Configuration</DialogTitle>
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+            <DialogTitle className="text-lg sm:text-xl font-bold text-gradient">Admin Configuration</DialogTitle>
             {/* Day / Month toggle */}
             <div className="flex items-center gap-1 bg-muted rounded-lg p-1">
               <button
                 onClick={() => onViewModeChange('day')}
-                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-medium transition-colors ${
+                className={`flex items-center gap-1.5 px-2 sm:px-3 py-1.5 rounded-md text-xs font-medium transition-colors ${
                   viewMode === 'day' ? 'bg-primary text-primary-foreground' : 'text-muted-foreground hover:text-foreground'
                 }`}
               >
@@ -166,7 +166,7 @@ export function AdminPanel({
               </button>
               <button
                 onClick={() => onViewModeChange('month')}
-                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-medium transition-colors ${
+                className={`flex items-center gap-1.5 px-2 sm:px-3 py-1.5 rounded-md text-xs font-medium transition-colors ${
                   viewMode === 'month' ? 'bg-primary text-primary-foreground' : 'text-muted-foreground hover:text-foreground'
                 }`}
               >
@@ -178,33 +178,33 @@ export function AdminPanel({
         </DialogHeader>
 
         <Tabs defaultValue="guides" className="flex-1 overflow-hidden flex flex-col">
-          <TabsList className="grid w-full grid-cols-3 bg-muted">
-            <TabsTrigger value="guides" className="gap-2">
-              <Users className="w-4 h-4" />
-              {viewMode === 'day' ? 'Daily Targets' : 'Monthly Targets'}
+          <TabsList className="grid w-full grid-cols-3 bg-muted text-xs sm:text-sm">
+            <TabsTrigger value="guides" className="gap-1 sm:gap-2 px-1 sm:px-3">
+              <Users className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
+              <span className="hidden xs:inline">{viewMode === 'day' ? 'Daily' : 'Monthly'}</span> Targets
             </TabsTrigger>
-            <TabsTrigger value="chats" className="gap-2">
-              <MessageSquare className="w-4 h-4" />
-              {viewMode === 'day' ? 'Daily Chats' : 'Monthly Chats'}
+            <TabsTrigger value="chats" className="gap-1 sm:gap-2 px-1 sm:px-3">
+              <MessageSquare className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
+              <span className="hidden xs:inline">{viewMode === 'day' ? 'Daily' : 'Monthly'}</span> Chats
             </TabsTrigger>
-            <TabsTrigger value="formulas" className="gap-2">
-              <Calculator className="w-4 h-4" />
-              Formula Overrides
+            <TabsTrigger value="formulas" className="gap-1 sm:gap-2 px-1 sm:px-3">
+              <Calculator className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
+              <span className="hidden sm:inline">Formula</span> <span className="hidden xs:inline sm:hidden">Form.</span>
             </TabsTrigger>
           </TabsList>
 
           {/* Guides & Targets Tab */}
           <TabsContent value="guides" className="flex-1 overflow-hidden flex flex-col mt-4">
             {/* Add new guide */}
-            <div className="flex gap-2 mb-4">
+            <div className="flex flex-col sm:flex-row gap-2 mb-4">
               <Input
                 placeholder="Enter guide name (e.g., 'Doe, John')"
                 value={newGuideName}
                 onChange={(e) => setNewGuideName(e.target.value)}
-                className="input-dark"
+                className="input-dark flex-1"
                 onKeyDown={(e) => e.key === 'Enter' && handleAddGuide()}
               />
-              <Button onClick={handleAddGuide} className="gap-2 gradient-primary">
+              <Button onClick={handleAddGuide} className="gap-2 gradient-primary whitespace-nowrap">
                 <Plus className="w-4 h-4" />
                 Add Guide
               </Button>
@@ -213,24 +213,24 @@ export function AdminPanel({
             {/* Guides list */}
             <div className="flex-1 overflow-auto space-y-3 pr-2">
               {localTargets.length === 0 ? (
-                <div className="text-center py-8 text-muted-foreground">
+                <div className="text-center py-8 text-muted-foreground text-sm">
                   No guides added yet. Add guides to set targets.
                 </div>
               ) : (
                 localTargets.map((target) => (
-                  <div key={target.name} className="glass-card p-4 animate-fade-in">
+                  <div key={target.name} className="glass-card p-3 sm:p-4 animate-fade-in">
                     <div className="flex items-center justify-between mb-3">
-                      <h4 className="font-semibold text-foreground">{target.name}</h4>
+                      <h4 className="font-semibold text-foreground text-sm sm:text-base truncate pr-2">{target.name}</h4>
                       <Button
                         variant="ghost"
                         size="sm"
                         onClick={() => handleRemoveGuide(target.name)}
-                        className="text-destructive hover:text-destructive hover:bg-destructive/10"
+                        className="text-destructive hover:text-destructive hover:bg-destructive/10 flex-shrink-0"
                       >
                         <Trash2 className="w-4 h-4" />
                       </Button>
                     </div>
-                    <div className="grid grid-cols-3 gap-3">
+                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                       <div>
                         <Label className="text-xs text-muted-foreground">
                           {viewMode === 'day' ? 'Target Orders' : 'Monthly Orders'}
@@ -300,25 +300,25 @@ export function AdminPanel({
 
           {/* Chat Counts Tab */}
           <TabsContent value="chats" className="flex-1 overflow-hidden flex flex-col mt-4">
-            <p className="text-sm text-muted-foreground mb-4">
+            <p className="text-xs sm:text-sm text-muted-foreground mb-4">
               Quickly update {viewMode === 'day' ? 'daily' : 'monthly'} chat counts for each guide.
             </p>
 
             <div className="flex-1 overflow-auto pr-2">
               {localTargets.length === 0 ? (
-                <div className="text-center py-8 text-muted-foreground">
+                <div className="text-center py-8 text-muted-foreground text-sm">
                   No guides added yet. Add guides in the "Targets" tab first.
                 </div>
               ) : (
-                <div className="grid grid-cols-2 gap-3">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                   {localTargets.map((target) => (
                     <div
                       key={target.name}
-                      className="glass-card p-3 animate-fade-in flex items-center justify-between gap-4"
+                      className="glass-card p-3 animate-fade-in flex items-center justify-between gap-3"
                     >
                       <div className="flex items-center gap-2 flex-1 min-w-0">
                         <MessageSquare className="w-4 h-4 text-accent flex-shrink-0" />
-                        <span className="font-medium text-foreground truncate">{target.name}</span>
+                        <span className="font-medium text-foreground truncate text-sm">{target.name}</span>
                       </div>
                       <Input
                         type="number"
@@ -330,7 +330,7 @@ export function AdminPanel({
                             Number(e.target.value)
                           )
                         }
-                        className="input-dark w-24 text-center"
+                        className="input-dark w-20 sm:w-24 text-center"
                         placeholder="0"
                       />
                     </div>

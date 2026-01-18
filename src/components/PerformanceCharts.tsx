@@ -92,15 +92,15 @@ export function PerformanceCharts({ salesData, targets, viewMode }: PerformanceC
   }
 
   return (
-    <div className="glass-card p-6 space-y-4">
-      <div className="flex flex-wrap items-center justify-between gap-4">
-        <h3 className="text-lg font-semibold text-foreground">Performance Charts</h3>
-        <div className="flex gap-2">
+    <div className="glass-card p-4 sm:p-6 space-y-4">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 sm:gap-4">
+        <h3 className="text-base sm:text-lg font-semibold text-foreground">Performance Charts</h3>
+        <div className="flex flex-wrap gap-1.5 sm:gap-2">
           {(['newRevenue', 'newOrders', 'nrpc', 'conversion'] as MetricKey[]).map((m) => (
             <button
               key={m}
               onClick={() => setMetric(m)}
-              className={`px-3 py-1.5 rounded-md text-xs font-medium transition-colors ${
+              className={`px-2 sm:px-3 py-1 sm:py-1.5 rounded-md text-[10px] sm:text-xs font-medium transition-colors ${
                 metric === m ? 'bg-primary text-primary-foreground' : 'bg-muted text-muted-foreground hover:bg-muted/70'
               }`}
             >
@@ -112,34 +112,34 @@ export function PerformanceCharts({ salesData, targets, viewMode }: PerformanceC
 
       <Tabs defaultValue="bar" className="w-full">
         <TabsList className="grid w-full grid-cols-3 mb-4 bg-muted">
-          <TabsTrigger value="bar" className="gap-2">
-            <BarChart3 className="w-4 h-4" />
-            Bar Chart
+          <TabsTrigger value="bar" className="gap-1 sm:gap-2 text-xs sm:text-sm">
+            <BarChart3 className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
+            <span className="hidden xs:inline">Bar</span>
           </TabsTrigger>
-          <TabsTrigger value="pie" className="gap-2">
-            <PieChartIcon className="w-4 h-4" />
-            Pie Chart
+          <TabsTrigger value="pie" className="gap-1 sm:gap-2 text-xs sm:text-sm">
+            <PieChartIcon className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
+            <span className="hidden xs:inline">Pie</span>
           </TabsTrigger>
-          <TabsTrigger value="line" className="gap-2">
-            <LineChartIcon className="w-4 h-4" />
-            Line Chart
+          <TabsTrigger value="line" className="gap-1 sm:gap-2 text-xs sm:text-sm">
+            <LineChartIcon className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
+            <span className="hidden xs:inline">Line</span>
           </TabsTrigger>
         </TabsList>
 
-        <TabsContent value="bar" className="h-[350px]">
+        <TabsContent value="bar" className="h-[280px] sm:h-[350px]">
           <ChartContainer config={chartConfig} className="h-full w-full">
             <ResponsiveContainer width="100%" height="100%">
-              <BarChart data={chartData} margin={{ top: 20, right: 30, left: 20, bottom: 60 }}>
+              <BarChart data={chartData} margin={{ top: 20, right: 10, left: 0, bottom: 60 }}>
                 <CartesianGrid strokeDasharray="3 3" stroke="hsl(220, 15%, 25%)" />
                 <XAxis
                   dataKey="name"
-                  tick={{ fill: 'hsl(215, 15%, 65%)', fontSize: 11 }}
+                  tick={{ fill: 'hsl(215, 15%, 65%)', fontSize: 10 }}
                   angle={-45}
                   textAnchor="end"
                   interval={0}
                   height={60}
                 />
-                <YAxis tick={{ fill: 'hsl(215, 15%, 65%)', fontSize: 11 }} tickFormatter={formatValue} />
+                <YAxis tick={{ fill: 'hsl(215, 15%, 65%)', fontSize: 10 }} tickFormatter={formatValue} width={60} />
                 <ChartTooltip
                   content={<ChartTooltipContent formatter={(val) => formatValue(val as number)} />}
                 />
@@ -149,7 +149,7 @@ export function PerformanceCharts({ salesData, targets, viewMode }: PerformanceC
           </ChartContainer>
         </TabsContent>
 
-        <TabsContent value="pie" className="h-[350px]">
+        <TabsContent value="pie" className="h-[280px] sm:h-[350px]">
           <ChartContainer config={chartConfig} className="h-full w-full">
             <ResponsiveContainer width="100%" height="100%">
               <PieChart>
@@ -159,7 +159,7 @@ export function PerformanceCharts({ salesData, targets, viewMode }: PerformanceC
                   nameKey="name"
                   cx="50%"
                   cy="50%"
-                  outerRadius={110}
+                  outerRadius={80}
                   label={({ name, value }) => `${name}: ${formatValue(value)}`}
                   labelLine={{ stroke: 'hsl(215, 15%, 50%)' }}
                 >
@@ -187,20 +187,20 @@ export function PerformanceCharts({ salesData, targets, viewMode }: PerformanceC
           </ChartContainer>
         </TabsContent>
 
-        <TabsContent value="line" className="h-[350px]">
+        <TabsContent value="line" className="h-[280px] sm:h-[350px]">
           <ChartContainer config={chartConfig} className="h-full w-full">
             <ResponsiveContainer width="100%" height="100%">
-              <LineChart data={chartData} margin={{ top: 20, right: 30, left: 20, bottom: 60 }}>
+              <LineChart data={chartData} margin={{ top: 20, right: 10, left: 0, bottom: 60 }}>
                 <CartesianGrid strokeDasharray="3 3" stroke="hsl(220, 15%, 25%)" />
                 <XAxis
                   dataKey="name"
-                  tick={{ fill: 'hsl(215, 15%, 65%)', fontSize: 11 }}
+                  tick={{ fill: 'hsl(215, 15%, 65%)', fontSize: 10 }}
                   angle={-45}
                   textAnchor="end"
                   interval={0}
                   height={60}
                 />
-                <YAxis tick={{ fill: 'hsl(215, 15%, 65%)', fontSize: 11 }} tickFormatter={formatValue} />
+                <YAxis tick={{ fill: 'hsl(215, 15%, 65%)', fontSize: 10 }} tickFormatter={formatValue} width={60} />
                 <ChartTooltip
                   content={<ChartTooltipContent formatter={(val) => formatValue(val as number)} />}
                 />
@@ -209,8 +209,8 @@ export function PerformanceCharts({ salesData, targets, viewMode }: PerformanceC
                   dataKey={metric}
                   stroke={chartConfig[metric].color}
                   strokeWidth={2}
-                  dot={{ r: 5, fill: chartConfig[metric].color }}
-                  activeDot={{ r: 7 }}
+                  dot={{ r: 4, fill: chartConfig[metric].color }}
+                  activeDot={{ r: 6 }}
                 />
               </LineChart>
             </ResponsiveContainer>

@@ -403,79 +403,79 @@ export function Dashboard({ onLogout }: DashboardProps) {
           isFullscreen ? 'bg-card/95' : 'bg-card/80'
         }`}
       >
-        <div className={`mx-auto px-4 ${isFullscreen ? 'max-w-none py-4' : 'container py-3'}`}>
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-4">
-              <div className="relative">
+        <div className={`mx-auto px-3 sm:px-4 ${isFullscreen ? 'max-w-none py-4' : 'container py-2 sm:py-3'}`}>
+          <div className="flex items-center justify-between gap-2">
+            <div className="flex items-center gap-2 sm:gap-4">
+              <div className="relative flex-shrink-0">
                 {/* Logo - Update at src/assets/wolfpack-logo.png */}
                 <img 
                   src={wolfpackLogo} 
                   alt="WolfPack Logo" 
-                  className={`rounded-xl object-cover transition-all ${isFullscreen ? 'w-14 h-14' : 'w-12 h-12'}`}
+                  className={`rounded-xl object-cover transition-all ${isFullscreen ? 'w-14 h-14' : 'w-10 h-10 sm:w-12 sm:h-12'}`}
                   onError={(e) => {
                     // Fallback to gradient icon if logo not found
                     e.currentTarget.style.display = 'none';
                     e.currentTarget.nextElementSibling?.classList.remove('hidden');
                   }}
                 />
-                <div className={`rounded-xl gradient-primary flex items-center justify-center glow-primary transition-all hidden ${isFullscreen ? 'w-14 h-14' : 'w-12 h-12'}`}>
-                  <span className={`text-primary-foreground font-bold ${isFullscreen ? 'text-xl' : 'text-lg'}`}>WP</span>
+                <div className={`rounded-xl gradient-primary flex items-center justify-center glow-primary transition-all hidden ${isFullscreen ? 'w-14 h-14' : 'w-10 h-10 sm:w-12 sm:h-12'}`}>
+                  <span className={`text-primary-foreground font-bold ${isFullscreen ? 'text-xl' : 'text-base sm:text-lg'}`}>WP</span>
                 </div>
-                <div className="absolute -top-1 -right-1 w-4 h-4 bg-success rounded-full animate-pulse-glow" />
+                <div className="absolute -top-1 -right-1 w-3 h-3 sm:w-4 sm:h-4 bg-success rounded-full animate-pulse-glow" />
               </div>
-              <div>
-                <h1 className={`font-bold text-gradient tracking-tight ${isFullscreen ? 'text-3xl' : 'text-2xl'}`}>
+              <div className="min-w-0">
+                <h1 className={`font-bold text-gradient tracking-tight truncate ${isFullscreen ? 'text-3xl' : 'text-lg sm:text-2xl'}`}>
                   Team WolfPack
                 </h1>
-                <p className={`text-muted-foreground font-medium ${isFullscreen ? 'text-sm' : 'text-xs'}`}>
+                <p className={`text-muted-foreground font-medium hidden sm:block ${isFullscreen ? 'text-sm' : 'text-xs'}`}>
                   Sales Performance Dashboard
                 </p>
               </div>
             </div>
 
-            <div className="flex items-center gap-3">
+            <div className="flex items-center gap-1.5 sm:gap-3 flex-wrap justify-end">
               {/* Day / Month Toggle */}
-              <div className="flex items-center gap-1 bg-muted rounded-lg p-1">
+              <div className="flex items-center gap-0.5 sm:gap-1 bg-muted rounded-lg p-0.5 sm:p-1">
                 <button
                   onClick={() => setViewMode('day')}
-                  className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-medium transition-colors ${
+                  className={`flex items-center gap-1 sm:gap-1.5 px-2 sm:px-3 py-1 sm:py-1.5 rounded-md text-xs font-medium transition-colors ${
                     viewMode === 'day' ? 'bg-primary text-primary-foreground' : 'text-muted-foreground hover:text-foreground'
                   }`}
                 >
-                  <CalendarDays className="w-3.5 h-3.5" />
-                  Day
+                  <CalendarDays className="w-3 h-3 sm:w-3.5 sm:h-3.5" />
+                  <span className="hidden xs:inline">Day</span>
                 </button>
                 <button
                   onClick={() => setViewMode('month')}
-                  className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-medium transition-colors ${
+                  className={`flex items-center gap-1 sm:gap-1.5 px-2 sm:px-3 py-1 sm:py-1.5 rounded-md text-xs font-medium transition-colors ${
                     viewMode === 'month' ? 'bg-primary text-primary-foreground' : 'text-muted-foreground hover:text-foreground'
                   }`}
                 >
-                  <CalendarRange className="w-3.5 h-3.5" />
-                  Month
+                  <CalendarRange className="w-3 h-3 sm:w-3.5 sm:h-3.5" />
+                  <span className="hidden xs:inline">Month</span>
                 </button>
               </div>
 
               {/* Fullscreen View Toggle - Only show when in fullscreen */}
               {isFullscreen && (
-                <div className="flex items-center gap-1 bg-muted rounded-lg p-1">
+                <div className="flex items-center gap-0.5 sm:gap-1 bg-muted rounded-lg p-0.5 sm:p-1">
                   <button
                     onClick={() => setFullscreenView('table')}
-                    className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-medium transition-colors ${
+                    className={`flex items-center gap-1 sm:gap-1.5 px-2 sm:px-3 py-1 sm:py-1.5 rounded-md text-xs font-medium transition-colors ${
                       fullscreenView === 'table' ? 'bg-primary text-primary-foreground' : 'text-muted-foreground hover:text-foreground'
                     }`}
                   >
-                    <Table2 className="w-3.5 h-3.5" />
-                    Guide View
+                    <Table2 className="w-3 h-3 sm:w-3.5 sm:h-3.5" />
+                    <span className="hidden sm:inline">Guide View</span>
                   </button>
                   <button
                     onClick={() => setFullscreenView('graphs')}
-                    className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-medium transition-colors ${
+                    className={`flex items-center gap-1 sm:gap-1.5 px-2 sm:px-3 py-1 sm:py-1.5 rounded-md text-xs font-medium transition-colors ${
                       fullscreenView === 'graphs' ? 'bg-primary text-primary-foreground' : 'text-muted-foreground hover:text-foreground'
                     }`}
                   >
-                    <BarChart3 className="w-3.5 h-3.5" />
-                    Graphs
+                    <BarChart3 className="w-3 h-3 sm:w-3.5 sm:h-3.5" />
+                    <span className="hidden sm:inline">Graphs</span>
                   </button>
                 </div>
               )}
@@ -485,14 +485,14 @@ export function Dashboard({ onLogout }: DashboardProps) {
                 variant="outline"
                 size="sm"
                 onClick={toggleFullscreen}
-                className={`gap-2 transition-all ${
+                className={`gap-1 sm:gap-2 px-2 sm:px-3 transition-all ${
                   isFullscreen
                     ? 'border-primary bg-primary/20 text-primary hover:bg-primary/30'
                     : 'border-primary/30 hover:border-primary hover:bg-primary/10'
                 }`}
               >
                 {isFullscreen ? <Minimize className="w-4 h-4" /> : <Maximize className="w-4 h-4" />}
-                {isFullscreen ? 'Exit' : 'Fullscreen'}
+                <span className="hidden sm:inline">{isFullscreen ? 'Exit' : 'Fullscreen'}</span>
               </Button>
 
               {!isFullscreen && (
@@ -512,10 +512,10 @@ export function Dashboard({ onLogout }: DashboardProps) {
                     variant="ghost"
                     size="sm"
                     onClick={handleLogout}
-                    className="gap-2 text-muted-foreground hover:text-foreground"
+                    className="gap-1 sm:gap-2 px-2 sm:px-3 text-muted-foreground hover:text-foreground"
                   >
                     <LogOut className="w-4 h-4" />
-                    Sign Out
+                    <span className="hidden sm:inline">Sign Out</span>
                   </Button>
                 </>
               )}
@@ -527,18 +527,18 @@ export function Dashboard({ onLogout }: DashboardProps) {
       <main className={`relative z-10 mx-auto px-4 ${isFullscreen ? 'max-w-none py-6 space-y-6' : 'container py-6 space-y-6'}`}>
         {/* File Upload Section - Hidden in fullscreen */}
         {!isFullscreen && (
-          <section className="glass-card p-6">
-            <div className="flex items-center justify-between mb-4">
+          <section className="glass-card p-4 sm:p-6">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4">
               <div className="flex items-center gap-3">
-                <div className="w-8 h-8 rounded-lg bg-primary/20 flex items-center justify-center">
+                <div className="w-8 h-8 rounded-lg bg-primary/20 flex items-center justify-center flex-shrink-0">
                   <TrendingUp className="w-4 h-4 text-primary" />
                 </div>
-                <h2 className="text-lg font-semibold text-foreground">Data Import</h2>
+                <h2 className="text-base sm:text-lg font-semibold text-foreground">Data Import</h2>
               </div>
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-2 flex-wrap">
                 {hasLocalChanges && (
                   <span className="text-xs text-warning bg-warning/20 px-2 py-1 rounded-full font-medium animate-pulse">
-                    Unpublished Changes
+                    Unpublished
                   </span>
                 )}
                 {parsedData && (
@@ -548,20 +548,20 @@ export function Dashboard({ onLogout }: DashboardProps) {
                       size="sm"
                       onClick={handlePublishData}
                       disabled={isPublishing}
-                      className="gap-2 bg-success hover:bg-success/80 text-success-foreground"
+                      className="gap-1.5 sm:gap-2 bg-success hover:bg-success/80 text-success-foreground text-xs sm:text-sm"
                     >
                       {isPublishing ? <Loader2 className="w-4 h-4 animate-spin" /> : <Upload className="w-4 h-4" />}
-                      Publish {viewMode === 'day' ? 'Daily' : 'Monthly'}
+                      <span className="hidden xs:inline">Publish</span> {viewMode === 'day' ? 'Daily' : 'Monthly'}
                     </Button>
                     {hasLocalChanges && (
                       <Button
                         variant="outline"
                         size="sm"
                         onClick={handleClearData}
-                        className="gap-2 border-destructive/30 hover:border-destructive hover:bg-destructive/20 text-destructive"
+                        className="gap-1.5 sm:gap-2 border-destructive/30 hover:border-destructive hover:bg-destructive/20 text-destructive text-xs sm:text-sm"
                       >
                         <RefreshCw className="w-4 h-4" />
-                        Discard Changes
+                        <span className="hidden sm:inline">Discard</span>
                       </Button>
                     )}
                   </>
@@ -593,7 +593,7 @@ export function Dashboard({ onLogout }: DashboardProps) {
                 )}
               </div>
 
-              <div className={`grid grid-cols-2 md:grid-cols-3 xl:grid-cols-6 ${isFullscreen ? 'gap-6' : 'gap-4'}`}>
+              <div className={`grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 ${isFullscreen ? 'gap-4 sm:gap-6' : 'gap-3 sm:gap-4'}`}>
                 <StatCard
                   title="NewConversion%"
                   value={totalChats > 0 ? formatPercent(newConversion) : '-'}
