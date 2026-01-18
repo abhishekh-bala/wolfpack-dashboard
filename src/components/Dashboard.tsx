@@ -14,25 +14,24 @@ import { useUserRole } from '@/hooks/useUserRole';
 import { Button } from '@/components/ui/button';
 import { supabase } from '@/integrations/supabase/client';
 import {
-  DollarSign,
   TrendingUp,
-  MessageSquare,
   LogOut,
   RefreshCw,
   Calendar,
   Maximize,
   Minimize,
   Loader2,
-  Percent,
-  Hash,
-  Coins,
   CalendarDays,
   CalendarRange,
-  Users,
   Upload,
-  Edit3,
   Table2,
   BarChart3,
+  Target,
+  CircleDollarSign,
+  Banknote,
+  ShoppingCart,
+  Receipt,
+  MessageCircle,
 } from 'lucide-react';
 import wolfpackLogo from '@/assets/wolfpack-logo.png';
 
@@ -579,7 +578,7 @@ export function Dashboard({ onLogout }: DashboardProps) {
               <div className="flex items-center justify-between mb-4">
                 <div className="flex items-center gap-3">
                   <div className={`rounded-lg flex items-center justify-center ${isFullscreen ? 'w-10 h-10 bg-success/20' : 'w-8 h-8 bg-success/20'}`}>
-                    <DollarSign className={`text-success ${isFullscreen ? 'w-5 h-5' : 'w-4 h-4'}`} />
+                    <Banknote className={`text-success ${isFullscreen ? 'w-5 h-5' : 'w-4 h-4'}`} />
                   </div>
                   <h2 className={`font-semibold text-foreground ${isFullscreen ? 'text-2xl' : 'text-lg'}`}>
                     Summary ({viewMode === 'day' ? 'Daily' : 'Monthly'})
@@ -598,7 +597,7 @@ export function Dashboard({ onLogout }: DashboardProps) {
                   title="NewConversion%"
                   value={totalChats > 0 ? formatPercent(newConversion) : '-'}
                   subtitle={totalChats > 0 ? `${summaryToUse?.newOrders || 0} new / ${totalChats} chats` : 'No chat data'}
-                  icon={Percent}
+                  icon={Target}
                   variant={totalChats > 0 ? 'success' : 'warning'}
                   compact={false}
                   isFullscreen={isFullscreen}
@@ -608,7 +607,7 @@ export function Dashboard({ onLogout }: DashboardProps) {
                   title="NRPC"
                   value={totalChats > 0 ? formatCurrency(nrpc) : '-'}
                   subtitle={totalChats > 0 ? `${totalChats} total chats` : 'No chat data'}
-                  icon={MessageSquare}
+                  icon={CircleDollarSign}
                   variant={totalChats > 0 ? 'default' : 'warning'}
                   compact={false}
                   isFullscreen={isFullscreen}
@@ -628,7 +627,7 @@ export function Dashboard({ onLogout }: DashboardProps) {
                   title="New Orders"
                   value={(summaryToUse?.newOrders || 0).toString()}
                   subtitle="New orders only"
-                  icon={Hash}
+                  icon={ShoppingCart}
                   variant="default"
                   compact={false}
                   isFullscreen={isFullscreen}
@@ -638,7 +637,7 @@ export function Dashboard({ onLogout }: DashboardProps) {
                   title="New AOS"
                   value={summaryToUse && summaryToUse.newOrders > 0 ? formatCurrency(newAos) : '-'}
                   subtitle="New avg order size"
-                  icon={Coins}
+                  icon={Receipt}
                   variant="default"
                   compact={false}
                   isFullscreen={isFullscreen}
@@ -648,7 +647,7 @@ export function Dashboard({ onLogout }: DashboardProps) {
                   title="Total Chats"
                   value={totalChats.toString()}
                   subtitle={viewMode === 'day' ? 'Daily chats' : 'Monthly chats'}
-                  icon={Users}
+                  icon={MessageCircle}
                   variant="default"
                   compact={false}
                   isFullscreen={isFullscreen}
