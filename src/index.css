@@ -45,7 +45,13 @@
     --input: 220 15% 15%;
     --ring: 200 100% 50%;
 
-    --radius: 0.5rem;
+    --radius: 0.75rem;
+
+    /* Glassmorphism Variables */
+    --glass-bg: hsla(220, 18%, 12%, 0.4);
+    --glass-border: hsla(200, 100%, 70%, 0.15);
+    --glass-shadow: 0 8px 32px hsla(220, 30%, 0%, 0.4);
+    --glass-blur: 20px;
 
     /* Gradients */
     --gradient-primary: linear-gradient(135deg, hsl(200, 100%, 50%) 0%, hsl(180, 100%, 45%) 100%);
@@ -53,6 +59,7 @@
     --gradient-card: linear-gradient(135deg, hsl(220, 18%, 12%) 0%, hsl(220, 18%, 8%) 100%);
     --gradient-success: linear-gradient(135deg, hsl(142, 71%, 45%) 0%, hsl(160, 70%, 40%) 100%);
     --gradient-danger: linear-gradient(135deg, hsl(0, 72%, 51%) 0%, hsl(15, 70%, 45%) 100%);
+    --gradient-glass: linear-gradient(135deg, hsla(220, 20%, 20%, 0.5) 0%, hsla(220, 20%, 10%, 0.3) 100%);
 
     /* Shadows */
     --shadow-glow: 0 0 30px hsl(200 100% 50% / 0.2);
@@ -86,13 +93,66 @@
 }
 
 @layer components {
+  /* Premium Glassmorphism Card */
   .glass-card {
-    @apply bg-card/80 backdrop-blur-xl border border-border/50 rounded-lg;
-    box-shadow: var(--shadow-card);
+    background: var(--gradient-glass);
+    backdrop-filter: blur(var(--glass-blur));
+    -webkit-backdrop-filter: blur(var(--glass-blur));
+    border: 1px solid var(--glass-border);
+    border-radius: var(--radius);
+    box-shadow: 
+      var(--glass-shadow),
+      inset 0 1px 0 0 hsla(200, 100%, 80%, 0.1),
+      inset 0 -1px 0 0 hsla(220, 20%, 0%, 0.2);
+    position: relative;
+    overflow: hidden;
+  }
+
+  .glass-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 1px;
+    background: linear-gradient(
+      90deg,
+      transparent,
+      hsla(200, 100%, 70%, 0.4) 20%,
+      hsla(180, 100%, 60%, 0.6) 50%,
+      hsla(200, 100%, 70%, 0.4) 80%,
+      transparent
+    );
+  }
+
+  /* Glass Header */
+  .glass-header {
+    background: hsla(220, 18%, 10%, 0.6);
+    backdrop-filter: blur(24px);
+    -webkit-backdrop-filter: blur(24px);
+    border-bottom: 1px solid var(--glass-border);
+    box-shadow: 0 4px 30px hsla(220, 30%, 0%, 0.3);
+  }
+
+  /* Glass Button */
+  .glass-button {
+    background: hsla(220, 20%, 20%, 0.4);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border: 1px solid hsla(200, 100%, 70%, 0.2);
+    transition: all 0.3s ease;
+  }
+
+  .glass-button:hover {
+    background: hsla(220, 20%, 25%, 0.5);
+    border-color: hsla(200, 100%, 70%, 0.4);
+    box-shadow: 0 0 20px hsla(200, 100%, 50%, 0.2);
   }
 
   .glow-primary {
-    box-shadow: var(--shadow-glow);
+    box-shadow: 
+      var(--shadow-glow),
+      inset 0 1px 0 0 hsla(200, 100%, 80%, 0.1);
   }
 
   .gradient-primary {
@@ -114,8 +174,24 @@
     background-clip: text;
   }
 
+  /* Premium Stat Card with Glassmorphism */
   .stat-card {
-    @apply glass-card p-4 relative overflow-hidden;
+    background: linear-gradient(
+      135deg,
+      hsla(220, 20%, 15%, 0.5) 0%,
+      hsla(220, 20%, 10%, 0.3) 100%
+    );
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border: 1px solid hsla(200, 100%, 70%, 0.12);
+    border-radius: var(--radius);
+    padding: 1rem;
+    position: relative;
+    overflow: hidden;
+    box-shadow: 
+      0 8px 32px hsla(220, 30%, 0%, 0.4),
+      inset 0 1px 0 0 hsla(200, 100%, 80%, 0.08);
+    transition: all 0.3s ease;
   }
 
   .stat-card::before {
@@ -125,7 +201,38 @@
     left: 0;
     right: 0;
     height: 2px;
-    background: var(--gradient-primary);
+    background: linear-gradient(
+      90deg,
+      transparent,
+      hsl(200 100% 50%) 30%,
+      hsl(180 100% 50%) 70%,
+      transparent
+    );
+    opacity: 0.8;
+  }
+
+  .stat-card::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: radial-gradient(
+      ellipse at top left,
+      hsla(200, 100%, 50%, 0.08),
+      transparent 50%
+    );
+    pointer-events: none;
+  }
+
+  .stat-card:hover {
+    transform: translateY(-2px);
+    border-color: hsla(200, 100%, 70%, 0.25);
+    box-shadow: 
+      0 12px 40px hsla(220, 30%, 0%, 0.5),
+      0 0 30px hsla(200, 100%, 50%, 0.15),
+      inset 0 1px 0 0 hsla(200, 100%, 80%, 0.12);
   }
 
   .table-row-alt:nth-child(even) {
@@ -142,10 +249,34 @@
 
   .input-dark {
     @apply bg-input border-border focus:border-primary focus:ring-primary/20;
+    backdrop-filter: blur(8px);
   }
 
   .btn-glow:hover {
     box-shadow: var(--shadow-glow);
+  }
+
+  /* Glass Table */
+  .glass-table {
+    background: hsla(220, 18%, 12%, 0.3);
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+    border: 1px solid var(--glass-border);
+    border-radius: var(--radius);
+  }
+
+  .glass-table thead {
+    background: hsla(220, 20%, 15%, 0.5);
+    border-bottom: 1px solid var(--glass-border);
+  }
+
+  .glass-table tbody tr {
+    border-bottom: 1px solid hsla(220, 15%, 25%, 0.3);
+    transition: background 0.2s ease;
+  }
+
+  .glass-table tbody tr:hover {
+    background: hsla(200, 100%, 50%, 0.05);
   }
 }
 
@@ -164,6 +295,10 @@
 
   .animate-float {
     animation: float linear infinite;
+  }
+
+  .animate-shimmer {
+    animation: shimmer 2s linear infinite;
   }
 
   @keyframes fadeIn {
@@ -205,6 +340,24 @@
       transform: translate(-50%, -50%) translateY(0) translateX(0);
     }
   }
+
+  @keyframes shimmer {
+    0% {
+      background-position: -200% 0;
+    }
+    100% {
+      background-position: 200% 0;
+    }
+  }
+
+  @keyframes borderGlow {
+    0%, 100% {
+      border-color: hsla(200, 100%, 70%, 0.15);
+    }
+    50% {
+      border-color: hsla(200, 100%, 70%, 0.35);
+    }
+  }
 }
 
 /* Fullscreen / Screenshot mode styles */
@@ -216,6 +369,10 @@
   --border: 220 18% 28%;
   --muted-foreground: 215 18% 75%;
 
+  /* Enhanced glass for fullscreen */
+  --glass-blur: 24px;
+  --glass-border: hsla(200, 100%, 70%, 0.2);
+
   /* Stronger glow */
   --shadow-glow: 0 0 50px hsl(var(--primary) / 0.4);
 
@@ -223,56 +380,63 @@
 }
 
 .fullscreen-mode .glass-card {
-  background: linear-gradient(145deg, hsl(var(--card) / 0.95), hsl(220 22% 8% / 0.98));
-  border-color: hsl(var(--primary) / 0.25);
+  background: linear-gradient(
+    145deg,
+    hsla(220, 20%, 15%, 0.6) 0%,
+    hsla(220, 20%, 8%, 0.4) 100%
+  );
+  border-color: hsla(200, 100%, 70%, 0.25);
   box-shadow: 
-    0 8px 32px hsl(220 30% 0% / 0.6),
-    0 0 60px hsl(var(--primary) / 0.15),
-    inset 0 1px 0 hsl(var(--primary) / 0.1);
+    0 8px 32px hsla(220, 30%, 0%, 0.6),
+    0 0 60px hsla(200, 100%, 50%, 0.15),
+    inset 0 1px 0 hsla(200, 100%, 80%, 0.15);
 }
 
 .fullscreen-mode .stat-card {
   padding: 1.5rem 2rem;
-  position: relative;
-  overflow: hidden;
+  background: linear-gradient(
+    145deg,
+    hsla(220, 20%, 18%, 0.6) 0%,
+    hsla(220, 20%, 10%, 0.4) 100%
+  );
+  border-color: hsla(200, 100%, 70%, 0.2);
   transition: all 0.3s ease;
 }
 
 .fullscreen-mode .stat-card::before {
   height: 3px;
   background: linear-gradient(90deg, 
-    hsl(var(--primary)) 0%, 
+    transparent,
+    hsl(var(--primary)) 20%, 
     hsl(180 100% 50%) 50%,
-    hsl(var(--primary)) 100%);
+    hsl(var(--primary)) 80%,
+    transparent);
 }
 
 .fullscreen-mode .stat-card::after {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background: radial-gradient(ellipse at top right, hsl(var(--primary) / 0.08), transparent 60%);
-  pointer-events: none;
+  background: radial-gradient(ellipse at top right, hsla(200, 100%, 50%, 0.12), transparent 60%);
 }
 
 .fullscreen-mode .stat-card:hover {
-  transform: translateY(-2px);
+  transform: translateY(-4px);
   box-shadow: 
-    0 12px 40px hsl(220 30% 0% / 0.7),
-    0 0 80px hsl(var(--primary) / 0.2);
-  border-color: hsl(var(--primary) / 0.4);
+    0 16px 48px hsla(220, 30%, 0%, 0.7),
+    0 0 60px hsla(200, 100%, 50%, 0.25);
+  border-color: hsla(200, 100%, 70%, 0.4);
 }
 
 /* Enhanced chart cards in fullscreen */
 .fullscreen-mode .glow-primary {
   box-shadow: 
-    0 0 60px hsl(var(--primary) / 0.25),
-    0 8px 32px hsl(220 30% 0% / 0.5),
-    inset 0 1px 0 hsl(var(--primary) / 0.15);
-  border-color: hsl(var(--primary) / 0.3);
-  background: linear-gradient(145deg, hsl(var(--card) / 0.95), hsl(220 22% 7% / 0.98));
+    0 0 60px hsla(200, 100%, 50%, 0.25),
+    0 8px 32px hsla(220, 30%, 0%, 0.5),
+    inset 0 1px 0 hsla(200, 100%, 80%, 0.15);
+  border-color: hsla(200, 100%, 70%, 0.3);
+  background: linear-gradient(
+    145deg,
+    hsla(220, 20%, 15%, 0.6) 0%,
+    hsla(220, 20%, 7%, 0.4) 100%
+  );
 }
 
 .fullscreen-mode .glow-primary::before {
@@ -291,15 +455,6 @@
 }
 
 /* Animated gradient border effect */
-@keyframes borderGlow {
-  0%, 100% {
-    border-color: hsl(var(--primary) / 0.3);
-  }
-  50% {
-    border-color: hsl(var(--primary) / 0.5);
-  }
-}
-
 .fullscreen-mode .stat-card,
 .fullscreen-mode .glow-primary {
   animation: borderGlow 3s ease-in-out infinite;
@@ -310,3 +465,7 @@
   box-shadow: 0 0 20px hsl(var(--success) / 0.3);
 }
 
+/* Export mode - hide particles for clean export */
+.export-mode .particle-network {
+  display: none !important;
+}

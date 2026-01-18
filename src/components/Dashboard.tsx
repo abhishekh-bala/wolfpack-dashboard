@@ -32,7 +32,9 @@ import {
   ShoppingCart,
   Receipt,
   MessageCircle,
+  Download,
 } from 'lucide-react';
+import html2canvas from 'html2canvas';
 import wolfpackLogo from '@/assets/wolfpack-logo.png';
 
 interface DashboardProps {
@@ -63,6 +65,7 @@ export function Dashboard({ onLogout }: DashboardProps) {
   const [fullscreenView, setFullscreenView] = useState<'table' | 'graphs'>('table');
   const [viewMode, setViewMode] = useState<'day' | 'month'>('day');
   const [editingAgent, setEditingAgent] = useState<string | null>(null);
+  const [isExporting, setIsExporting] = useState(false);
   const { toast } = useToast();
 
   const {
@@ -187,6 +190,54 @@ export function Dashboard({ onLogout }: DashboardProps) {
       document.body.style.overflow = prev;
     };
   }, [isFullscreen]);
+
+  // Export dashboard as image
+  const handleExportReport = async () => {
+    if (!rootRef.current) return;
+    
+    setIsExporting(true);
+    try {
+      // Add export mode class to hide particles
+      rootRef.current.classList.add('export-mode');
+      
+      // Wait for next frame to ensure class is applied
+      await new Promise(resolve => requestAnimationFrame(resolve));
+      
+      const canvas = await html2canvas(rootRef.current, {
+        backgroundColor: '#0a0c10',
+        scale: 2,
+        useCORS: true,
+        logging: false,
+        windowWidth: rootRef.current.scrollWidth,
+        windowHeight: rootRef.current.scrollHeight,
+      });
+      
+      // Remove export mode class
+      rootRef.current.classList.remove('export-mode');
+      
+      // Download the image
+      const link = document.createElement('a');
+      const dateStr = new Date().toISOString().split('T')[0];
+      link.download = `wolfpack-report-${viewMode}-${dateStr}.png`;
+      link.href = canvas.toDataURL('image/png');
+      link.click();
+      
+      toast({
+        title: 'Report Exported',
+        description: 'Dashboard screenshot saved successfully.',
+      });
+    } catch (error) {
+      console.error('Export error:', error);
+      rootRef.current?.classList.remove('export-mode');
+      toast({
+        title: 'Export Failed',
+        description: 'Failed to export dashboard. Please try again.',
+        variant: 'destructive',
+      });
+    } finally {
+      setIsExporting(false);
+    }
+  };
 
   const handleFileContent = (content: string) => {
     setIsProcessing(true);
@@ -478,6 +529,18 @@ export function Dashboard({ onLogout }: DashboardProps) {
                   </button>
                 </div>
               )}
+
+              {/* Export Report Button */}
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={handleExportReport}
+                disabled={isExporting || !parsedData}
+                className="gap-1 sm:gap-2 px-2 sm:px-3 border-success/30 hover:border-success hover:bg-success/10 text-success"
+              >
+                {isExporting ? <Loader2 className="w-4 h-4 animate-spin" /> : <Download className="w-4 h-4" />}
+                <span className="hidden sm:inline">Export</span>
+              </Button>
 
               {/* Fullscreen Toggle */}
               <Button
