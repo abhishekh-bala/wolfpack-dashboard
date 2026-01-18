@@ -197,46 +197,76 @@ export function FullscreenGraphsView({ salesData, targets, viewMode }: Fullscree
   };
 
   return (
-    <div className="h-full flex flex-col gap-4" style={{ minHeight: '600px' }}>
-      {/* Chart Type Selector */}
-      <div className="flex justify-center gap-2">
+    <div className="h-full flex flex-col gap-6" style={{ minHeight: '600px' }}>
+      {/* Chart Type Selector - Premium styled */}
+      <div className="flex justify-center gap-3">
         <button
           onClick={() => setChartType('bar')}
-          className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
-            chartType === 'bar' ? 'bg-primary text-primary-foreground' : 'bg-secondary text-secondary-foreground hover:bg-secondary/80'
+          className={`flex items-center gap-2.5 px-6 py-3 rounded-xl text-sm font-semibold transition-all duration-300 ${
+            chartType === 'bar' 
+              ? 'bg-gradient-to-r from-primary to-cyan-400 text-primary-foreground shadow-[0_0_30px_hsl(200_100%_50%/0.4)]' 
+              : 'bg-secondary/80 text-secondary-foreground hover:bg-secondary border border-border/50 hover:border-primary/30'
           }`}
         >
-          <BarChart3 className="w-4 h-4" />
+          <BarChart3 className="w-5 h-5" />
           Bar Chart
         </button>
         <button
           onClick={() => setChartType('line')}
-          className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
-            chartType === 'line' ? 'bg-primary text-primary-foreground' : 'bg-secondary text-secondary-foreground hover:bg-secondary/80'
+          className={`flex items-center gap-2.5 px-6 py-3 rounded-xl text-sm font-semibold transition-all duration-300 ${
+            chartType === 'line' 
+              ? 'bg-gradient-to-r from-primary to-cyan-400 text-primary-foreground shadow-[0_0_30px_hsl(200_100%_50%/0.4)]' 
+              : 'bg-secondary/80 text-secondary-foreground hover:bg-secondary border border-border/50 hover:border-primary/30'
           }`}
         >
-          <LineChartIcon className="w-4 h-4" />
+          <LineChartIcon className="w-5 h-5" />
           Line Chart
         </button>
         <button
           onClick={() => setChartType('pie')}
-          className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
-            chartType === 'pie' ? 'bg-primary text-primary-foreground' : 'bg-secondary text-secondary-foreground hover:bg-secondary/80'
+          className={`flex items-center gap-2.5 px-6 py-3 rounded-xl text-sm font-semibold transition-all duration-300 ${
+            chartType === 'pie' 
+              ? 'bg-gradient-to-r from-primary to-cyan-400 text-primary-foreground shadow-[0_0_30px_hsl(200_100%_50%/0.4)]' 
+              : 'bg-secondary/80 text-secondary-foreground hover:bg-secondary border border-border/50 hover:border-primary/30'
           }`}
         >
-          <PieChartIcon className="w-4 h-4" />
+          <PieChartIcon className="w-5 h-5" />
           Pie Chart
         </button>
       </div>
 
-      {/* 4 KPI Grid */}
-      <div className="flex-1 grid grid-cols-2 gap-4" style={{ minHeight: '500px' }}>
-        {METRICS.map((metric) => (
-          <div key={metric} className="glass-card p-4 flex flex-col glow-primary ring-1 ring-primary/20" style={{ minHeight: '240px' }}>
-            <h3 className="text-lg font-semibold text-foreground mb-2 text-center">
+      {/* 4 KPI Grid - Enhanced styling */}
+      <div className="flex-1 grid grid-cols-2 gap-6" style={{ minHeight: '500px' }}>
+        {METRICS.map((metric, index) => (
+          <div 
+            key={metric} 
+            className="glass-card p-6 flex flex-col glow-primary ring-1 ring-primary/25 relative overflow-hidden group hover:ring-primary/40 transition-all duration-300" 
+            style={{ 
+              minHeight: '280px',
+              animationDelay: `${index * 100}ms`
+            }}
+          >
+            {/* Decorative gradient overlay */}
+            <div 
+              className="absolute inset-0 opacity-30 pointer-events-none"
+              style={{
+                background: `radial-gradient(ellipse at top left, ${METRIC_CONFIG[metric].color}15, transparent 50%)`
+              }}
+            />
+            {/* Top accent line */}
+            <div 
+              className="absolute top-0 left-0 right-0 h-1"
+              style={{
+                background: `linear-gradient(90deg, transparent, ${METRIC_CONFIG[metric].color}, transparent)`
+              }}
+            />
+            <h3 
+              className="text-xl font-bold mb-4 text-center relative z-10 tracking-wide"
+              style={{ color: METRIC_CONFIG[metric].color, textShadow: `0 0 20px ${METRIC_CONFIG[metric].color}40` }}
+            >
               {METRIC_CONFIG[metric].label}
             </h3>
-            <div className="flex-1" style={{ minHeight: '180px' }}>
+            <div className="flex-1 relative z-10" style={{ minHeight: '200px' }}>
               {renderChart(metric)}
             </div>
           </div>
