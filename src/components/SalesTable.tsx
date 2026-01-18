@@ -243,69 +243,75 @@ export function SalesTable({
 
   return (
     <div className={`overflow-hidden glass-card ${isFullscreen ? 'glow-primary ring-1 ring-primary/20' : ''}`}>
-      <div className="overflow-x-auto">
-        <Table className={compact ? 'text-xs' : ''}>
+      {/* Mobile scroll hint */}
+      <div className="sm:hidden px-3 py-2 bg-muted/30 border-b border-border/50 flex items-center gap-2 text-xs text-muted-foreground">
+        <span>←</span>
+        <span>Scroll horizontally to see all columns</span>
+        <span>→</span>
+      </div>
+      <div className="overflow-x-auto -webkit-overflow-scrolling-touch">
+        <Table className={`${compact ? 'text-xs' : ''} min-w-[900px]`}>
           <TableHeader>
             <TableRow className={`hover:bg-muted/50 ${isFullscreen ? 'bg-muted/30' : 'bg-gradient-to-r from-muted/50 via-muted/30 to-muted/50'}`}>
               <TableHead 
-                className={`text-foreground font-bold cursor-pointer hover:text-primary transition-colors ${isFullscreen ? 'text-sm py-4' : compact ? 'py-2' : ''}`}
+                className={`text-foreground font-bold cursor-pointer hover:text-primary transition-colors sticky left-0 bg-card z-10 ${isFullscreen ? 'text-sm py-4' : compact ? 'py-2' : 'py-2 sm:py-3'}`}
                 onClick={() => handleSort('name')}
               >
                 <div className="flex items-center">Name<SortIcon field="name" /></div>
               </TableHead>
               <TableHead 
-                className={`text-foreground font-bold text-center cursor-pointer hover:text-primary transition-colors ${isFullscreen ? 'text-sm py-4' : compact ? 'py-2' : ''}`}
+                className={`text-foreground font-bold text-center cursor-pointer hover:text-primary transition-colors whitespace-nowrap ${isFullscreen ? 'text-sm py-4' : compact ? 'py-2' : 'py-2 sm:py-3'}`}
                 onClick={() => handleSort('orders')}
               >
-                <div className="flex items-center justify-center">New Orders<SortIcon field="orders" /></div>
+                <div className="flex items-center justify-center">Orders<SortIcon field="orders" /></div>
               </TableHead>
               <TableHead 
-                className={`text-foreground font-bold text-right cursor-pointer hover:text-primary transition-colors ${isFullscreen ? 'text-sm py-4' : compact ? 'py-2' : ''}`}
+                className={`text-foreground font-bold text-right cursor-pointer hover:text-primary transition-colors whitespace-nowrap ${isFullscreen ? 'text-sm py-4' : compact ? 'py-2' : 'py-2 sm:py-3'}`}
                 onClick={() => handleSort('newRevenue')}
               >
-                <div className="flex items-center justify-end">New Revenue<SortIcon field="newRevenue" /></div>
+                <div className="flex items-center justify-end">Revenue<SortIcon field="newRevenue" /></div>
               </TableHead>
-              <TableHead className={`text-foreground font-bold text-right ${isFullscreen ? 'text-sm py-4' : compact ? 'py-2' : ''}`}>Target Rev</TableHead>
+              <TableHead className={`text-foreground font-bold text-right whitespace-nowrap ${isFullscreen ? 'text-sm py-4' : compact ? 'py-2' : 'py-2 sm:py-3'}`}>Target</TableHead>
               <TableHead 
-                className={`text-foreground font-bold text-right cursor-pointer hover:text-primary transition-colors ${isFullscreen ? 'text-sm py-4' : compact ? 'py-2' : ''}`}
+                className={`text-foreground font-bold text-right cursor-pointer hover:text-primary transition-colors whitespace-nowrap ${isFullscreen ? 'text-sm py-4' : compact ? 'py-2' : 'py-2 sm:py-3'}`}
                 onClick={() => handleSort('revenueDeficit')}
               >
-                <div className="flex items-center justify-end">Rev Deficit<SortIcon field="revenueDeficit" /></div>
+                <div className="flex items-center justify-end">Deficit<SortIcon field="revenueDeficit" /></div>
               </TableHead>
-              <TableHead className={`text-foreground font-bold text-center ${isFullscreen ? 'text-sm py-4' : compact ? 'py-2' : ''}`}>Target Ord</TableHead>
+              <TableHead className={`text-foreground font-bold text-center whitespace-nowrap ${isFullscreen ? 'text-sm py-4' : compact ? 'py-2' : 'py-2 sm:py-3'}`}>Tgt Ord</TableHead>
               <TableHead 
-                className={`text-foreground font-bold text-center cursor-pointer hover:text-primary transition-colors ${isFullscreen ? 'text-sm py-4' : compact ? 'py-2' : ''}`}
+                className={`text-foreground font-bold text-center cursor-pointer hover:text-primary transition-colors whitespace-nowrap ${isFullscreen ? 'text-sm py-4' : compact ? 'py-2' : 'py-2 sm:py-3'}`}
                 onClick={() => handleSort('orderDeficit')}
               >
-                <div className="flex items-center justify-center">Ord Deficit<SortIcon field="orderDeficit" /></div>
+                <div className="flex items-center justify-center">Ord Δ<SortIcon field="orderDeficit" /></div>
               </TableHead>
               <TableHead 
-                className={`text-foreground font-bold text-center cursor-pointer hover:text-primary transition-colors ${isFullscreen ? 'text-sm py-4' : compact ? 'py-2' : ''}`}
+                className={`text-foreground font-bold text-center cursor-pointer hover:text-primary transition-colors whitespace-nowrap ${isFullscreen ? 'text-sm py-4' : compact ? 'py-2' : 'py-2 sm:py-3'}`}
                 onClick={() => handleSort('chatCount')}
               >
                 <div className="flex items-center justify-center">Chats<SortIcon field="chatCount" /></div>
               </TableHead>
               <TableHead 
-                className={`text-foreground font-bold text-center cursor-pointer hover:text-primary transition-colors ${isFullscreen ? 'text-sm py-4' : compact ? 'py-2' : ''}`}
+                className={`text-foreground font-bold text-center cursor-pointer hover:text-primary transition-colors whitespace-nowrap ${isFullscreen ? 'text-sm py-4' : compact ? 'py-2' : 'py-2 sm:py-3'}`}
                 onClick={() => handleSort('nrpc')}
               >
                 <div className="flex items-center justify-center">NRPC<SortIcon field="nrpc" /></div>
               </TableHead>
               <TableHead 
-                className={`text-foreground font-bold text-center cursor-pointer hover:text-primary transition-colors ${isFullscreen ? 'text-sm py-4' : compact ? 'py-2' : ''}`}
+                className={`text-foreground font-bold text-center cursor-pointer hover:text-primary transition-colors whitespace-nowrap ${isFullscreen ? 'text-sm py-4' : compact ? 'py-2' : 'py-2 sm:py-3'}`}
                 onClick={() => handleSort('currentConversion')}
               >
-                <div className="flex items-center justify-center">NewConv %<SortIcon field="currentConversion" /></div>
+                <div className="flex items-center justify-center">Conv%<SortIcon field="currentConversion" /></div>
               </TableHead>
-              <TableHead className={`text-foreground font-bold text-center ${isFullscreen ? 'text-sm py-4' : compact ? 'py-2' : ''}`}>Target %</TableHead>
+              <TableHead className={`text-foreground font-bold text-center whitespace-nowrap ${isFullscreen ? 'text-sm py-4' : compact ? 'py-2' : 'py-2 sm:py-3'}`}>Tgt%</TableHead>
               <TableHead 
-                className={`text-foreground font-bold text-center cursor-pointer hover:text-primary transition-colors ${isFullscreen ? 'text-sm py-4' : compact ? 'py-2' : ''}`}
+                className={`text-foreground font-bold text-center cursor-pointer hover:text-primary transition-colors whitespace-nowrap ${isFullscreen ? 'text-sm py-4' : compact ? 'py-2' : 'py-2 sm:py-3'}`}
                 onClick={() => handleSort('ordersToTarget')}
               >
                 <div className="flex items-center justify-center">Need<SortIcon field="ordersToTarget" /></div>
               </TableHead>
               {onKpiOverride && (
-                <TableHead className={`text-foreground font-bold text-center ${isFullscreen ? 'text-sm py-4' : compact ? 'py-2' : ''}`}>Actions</TableHead>
+                <TableHead className={`text-foreground font-bold text-center whitespace-nowrap ${isFullscreen ? 'text-sm py-4' : compact ? 'py-2' : 'py-2 sm:py-3'}`}>Edit</TableHead>
               )}
             </TableRow>
           </TableHeader>
@@ -351,22 +357,22 @@ export function SalesTable({
                   `}
                   style={{ animationDelay: `${index * 30}ms` }}
                 >
-                  <TableCell className={`font-medium ${compact ? 'py-1.5' : isFullscreen ? 'py-4' : ''}`}>
-                    <div className="flex items-center gap-2">
+                  <TableCell className={`font-medium sticky left-0 bg-card z-10 ${compact ? 'py-1.5' : isFullscreen ? 'py-4' : 'py-2 sm:py-3'}`}>
+                    <div className="flex items-center gap-1 sm:gap-2">
                       <span
-                        className={`${isFullscreen ? 'text-base font-semibold' : ''} ${
+                        className={`${isFullscreen ? 'text-base font-semibold' : 'text-xs sm:text-sm'} ${
                           isExceedingTargets ? 'text-success' : ''
-                        }`}
+                        } truncate max-w-[100px] sm:max-w-none`}
                       >
                         {row.name}
                       </span>
                       {isLeader && (
-                        <span className="text-xs px-2 py-0.5 rounded-md bg-gradient-to-r from-amber-500/20 to-orange-500/20 text-orange-400 border border-orange-400/40 font-bold shadow-sm">
-                          🐺 Team Leader
+                        <span className="text-[10px] sm:text-xs px-1.5 sm:px-2 py-0.5 rounded-md bg-gradient-to-r from-amber-500/20 to-orange-500/20 text-orange-400 border border-orange-400/40 font-bold shadow-sm whitespace-nowrap">
+                          🐺 <span className="hidden sm:inline">Team Leader</span>
                         </span>
                       )}
                       {hasOverride && (
-                        <span className="text-xs px-1.5 py-0.5 rounded bg-accent/30 text-accent font-medium">
+                        <span className="text-[10px] sm:text-xs px-1 sm:px-1.5 py-0.5 rounded bg-accent/30 text-accent font-medium hidden sm:inline">
                           Modified
                         </span>
                       )}
