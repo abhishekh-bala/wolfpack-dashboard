@@ -47,11 +47,10 @@ export function useAuth() {
   };
 
   const signOut = async () => {
+    // Clear state immediately to ensure UI updates
+    setUser(null);
+    setSession(null);
     const { error } = await supabase.auth.signOut();
-    if (!error) {
-      setUser(null);
-      setSession(null);
-    }
     return { error };
   };
 
