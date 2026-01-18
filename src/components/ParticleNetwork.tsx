@@ -21,33 +21,57 @@ export function ParticleNetwork() {
     const ctx = canvas.getContext('2d');
     if (!ctx) return;
 
-    const resizeCanvas = () => {
-      canvas.width = window.innerWidth;
-      canvas.height = window.innerHeight;
+    const initParticles = () => {
+      const width = window.innerWidth;
+      const height = window.innerHeight;
+      
+      canvas.width = width;
+      canvas.height = height;
+
+      // Calculate particle count based on screen size
+      const particleCount = Math.min(100, Math.floor((width * height) / 12000));
+      particlesRef.current = [];
+
+      // Create a grid-based distribution with randomization for even spread
+      const cols = Math.ceil(Math.sqrt(particleCount * (width / height)));
+      const rows = Math.ceil(particleCount / cols);
+      const cellWidth = width / cols;
+      const cellHeight = height / rows;
+
+      for (let i = 0; i < particleCount; i++) {
+        const col = i % cols;
+        const row = Math.floor(i / cols);
+        
+        // Position within cell with randomization
+        const x = (col * cellWidth) + (Math.random() * cellWidth);
+        const y = (row * cellHeight) + (Math.random() * cellHeight);
+
+        particlesRef.current.push({
+          x: Math.min(x, width),
+          y: Math.min(y, height),
+          vx: (Math.random() - 0.5) * 0.8,
+          vy: (Math.random() - 0.5) * 0.8,
+          size: Math.random() * 2 + 1.5,
+        });
+      }
     };
 
-    resizeCanvas();
-    window.addEventListener('resize', resizeCanvas);
+    initParticles();
 
-    // Initialize particles
-    const particleCount = Math.min(80, Math.floor((window.innerWidth * window.innerHeight) / 15000));
-    particlesRef.current = [];
+    const handleResize = () => {
+      initParticles();
+    };
 
-    for (let i = 0; i < particleCount; i++) {
-      particlesRef.current.push({
-        x: Math.random() * canvas.width,
-        y: Math.random() * canvas.height,
-        vx: (Math.random() - 0.5) * 0.5,
-        vy: (Math.random() - 0.5) * 0.5,
-        size: Math.random() * 2 + 1,
-      });
-    }
+    window.addEventListener('resize', handleResize);
 
-    const connectionDistance = 150;
-    const mouseConnectionDistance = 200;
+    const connectionDistance = 180;
+    const mouseConnectionDistance = 250;
 
     const animate = () => {
-      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      const width = canvas.width;
+      const height = canvas.height;
+      
+      ctx.clearRect(0, 0, width, height);
 
       const particles = particlesRef.current;
 
@@ -57,18 +81,33 @@ export function ParticleNetwork() {
         particle.x += particle.vx;
         particle.y += particle.vy;
 
-        // Bounce off edges
-        if (particle.x < 0 || particle.x > canvas.width) particle.vx *= -1;
-        if (particle.y < 0 || particle.y > canvas.height) particle.vy *= -1;
+        // Bounce off edges with some padding
+        if (particle.x < 0) {
+          particle.x = 0;
+          particle.vx *= -1;
+        } else if (particle.x > width) {
+          particle.x = width;
+          particle.vx *= -1;
+        }
+        
+        if (particle.y < 0) {
+          particle.y = 0;
+          particle.vy *= -1;
+        } else if (particle.y > height) {
+          particle.y = height;
+          particle.vy *= -1;
+        }
 
-        // Keep in bounds
-        particle.x = Math.max(0, Math.min(canvas.width, particle.x));
-        particle.y = Math.max(0, Math.min(canvas.height, particle.y));
-
-        // Draw particle
+        // Draw particle with glow
         ctx.beginPath();
         ctx.arc(particle.x, particle.y, particle.size, 0, Math.PI * 2);
-        ctx.fillStyle = 'rgba(100, 180, 255, 0.6)';
+        ctx.fillStyle = 'rgba(100, 180, 255, 0.8)';
+        ctx.fill();
+        
+        // Add subtle glow
+        ctx.beginPath();
+        ctx.arc(particle.x, particle.y, particle.size * 2, 0, Math.PI * 2);
+        ctx.fillStyle = 'rgba(100, 180, 255, 0.15)';
         ctx.fill();
 
         // Draw connections to other particles
@@ -79,12 +118,12 @@ export function ParticleNetwork() {
           const distance = Math.sqrt(dx * dx + dy * dy);
 
           if (distance < connectionDistance) {
-            const opacity = (1 - distance / connectionDistance) * 0.3;
+            const opacity = (1 - distance / connectionDistance) * 0.4;
             ctx.beginPath();
             ctx.moveTo(particle.x, particle.y);
             ctx.lineTo(other.x, other.y);
             ctx.strokeStyle = `rgba(100, 180, 255, ${opacity})`;
-            ctx.lineWidth = 0.5;
+            ctx.lineWidth = 0.8;
             ctx.stroke();
           }
         }
@@ -95,12 +134,12 @@ export function ParticleNetwork() {
         const mouseDistance = Math.sqrt(mouseDx * mouseDx + mouseDy * mouseDy);
 
         if (mouseDistance < mouseConnectionDistance) {
-          const opacity = (1 - mouseDistance / mouseConnectionDistance) * 0.5;
+          const opacity = (1 - mouseDistance / mouseConnectionDistance) * 0.6;
           ctx.beginPath();
           ctx.moveTo(particle.x, particle.y);
           ctx.lineTo(mouseRef.current.x, mouseRef.current.y);
           ctx.strokeStyle = `rgba(140, 200, 255, ${opacity})`;
-          ctx.lineWidth = 1;
+          ctx.lineWidth = 1.2;
           ctx.stroke();
         }
       });
@@ -122,7 +161,7 @@ export function ParticleNetwork() {
     window.addEventListener('mouseleave', handleMouseLeave);
 
     return () => {
-      window.removeEventListener('resize', resizeCanvas);
+      window.removeEventListener('resize', handleResize);
       window.removeEventListener('mousemove', handleMouseMove);
       window.removeEventListener('mouseleave', handleMouseLeave);
       if (animationRef.current) {
