@@ -56,31 +56,36 @@ export function StatCard({
   return (
     <div
       className={`stat-card group hover:border-primary/30 transition-all duration-300 ${paddingClass} ${
-        isFullscreen ? 'glow-primary ring-1 ring-primary/20' : ''
+        isFullscreen ? 'ring-1 ring-primary/20 relative' : ''
       }`}
     >
-      <div className="flex items-start justify-between">
+      <div className="flex items-start justify-between relative z-10">
         <div className="flex-1">
-          <p className={`text-muted-foreground font-medium ${titleClass}`}>{title}</p>
+          <p className={`text-muted-foreground font-medium tracking-wide uppercase ${titleClass}`}>{title}</p>
           <p
-            className={`font-bold ${valueClass} ${
-              isFullscreen ? fullscreenValueClasses[variant] : 'text-foreground'
+            className={`font-bold tracking-tight ${valueClass} ${
+              isFullscreen ? `${fullscreenValueClasses[variant]} drop-shadow-[0_0_8px_currentColor]` : 'text-foreground'
             }`}
           >
             {value}
           </p>
-          {subtitle && <p className={`text-muted-foreground ${subtitleClass}`}>{subtitle}</p>}
+          {subtitle && (
+            <p className={`text-muted-foreground ${subtitleClass} ${isFullscreen ? 'opacity-80' : ''}`}>
+              {subtitle}
+            </p>
+          )}
         </div>
         <div
-          className={`${iconBoxClass} rounded-lg ${iconBgClasses[variant]} flex items-center justify-center group-hover:scale-110 transition-transform ${
-            isFullscreen ? 'opacity-90' : ''
+          className={`${iconBoxClass} rounded-xl ${iconBgClasses[variant]} flex items-center justify-center group-hover:scale-110 transition-all duration-300 ${
+            isFullscreen ? 'shadow-lg' : ''
           }`}
+          style={isFullscreen ? { boxShadow: `0 0 20px currentColor` } : {}}
         >
-          <Icon className={iconSizeClass} />
+          <Icon className={`${iconSizeClass} ${isFullscreen ? 'drop-shadow-[0_0_4px_currentColor]' : ''}`} />
         </div>
       </div>
       {/* Animated underline on hover */}
-      <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-gradient-to-r from-transparent via-primary/50 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
+      <div className={`absolute bottom-0 left-0 right-0 bg-gradient-to-r from-transparent via-primary/50 to-transparent opacity-0 group-hover:opacity-100 transition-opacity ${isFullscreen ? 'h-1' : 'h-0.5'}`} />
     </div>
   );
 }
