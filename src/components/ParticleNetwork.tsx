@@ -8,7 +8,7 @@ interface Particle {
   size: number;
 }
 
-export function ParticleNetwork() {
+export function ParticleNetwork(): JSX.Element {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const particlesRef = useRef<Particle[]>([]);
   const animationRef = useRef<number>();
