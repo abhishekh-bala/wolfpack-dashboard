@@ -5,6 +5,7 @@ import { useToast } from '@/hooks/use-toast';
 export interface GuideTarget {
   id?: string;
   name: string;
+  loginName?: string; // Login name for CSV file mapping - not displayed in dashboard
   // Daily targets
   targetOrders: number;
   targetRevenue: number;
@@ -42,9 +43,10 @@ export function useGuideTargets() {
       return;
     }
 
-    const mapped: GuideTarget[] = (data || []).map((row) => ({
+    const mapped: GuideTarget[] = (data || []).map((row: any) => ({
       id: row.id,
       name: row.name,
+      loginName: row.login_name || '',
       targetOrders: row.target_orders,
       targetRevenue: Number(row.target_revenue),
       targetConversion: Number(row.target_conversion),
@@ -101,6 +103,7 @@ export function useGuideTargets() {
         const { error } = await supabase.from('guide_targets').upsert(
           {
             name: target.name,
+            login_name: target.loginName || null,
             target_orders: target.targetOrders,
             target_revenue: target.targetRevenue,
             target_conversion: target.targetConversion,

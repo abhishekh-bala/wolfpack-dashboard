@@ -46,6 +46,7 @@ export type Database = {
           chat_count: number
           created_at: string
           id: string
+          login_name: string | null
           monthly_chat_count: number
           monthly_target_conversion: number
           monthly_target_orders: number
@@ -60,6 +61,7 @@ export type Database = {
           chat_count?: number
           created_at?: string
           id?: string
+          login_name?: string | null
           monthly_chat_count?: number
           monthly_target_conversion?: number
           monthly_target_orders?: number
@@ -74,6 +76,7 @@ export type Database = {
           chat_count?: number
           created_at?: string
           id?: string
+          login_name?: string | null
           monthly_chat_count?: number
           monthly_target_conversion?: number
           monthly_target_orders?: number

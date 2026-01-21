@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
-import { FileUpload } from './FileUpload';
+import { FileUpload, FileType } from './FileUpload';
 import { SalesTable } from './SalesTable';
 import { StatCard } from './StatCard';
 import { AdminPanel } from './AdminPanel';
@@ -8,6 +8,7 @@ import { FullscreenGraphsView } from './FullscreenGraphsView';
 import { Footer } from './Footer';
 import { ParticleNetwork } from './ParticleNetwork';
 import { parseMhtml, ParsedMhtmlData, SalesData, formatCurrency, formatPercent } from '@/lib/mhtmlParser';
+import { parseCsv, getUnmappedLogins } from '@/lib/csvParser';
 import { useGuideTargets, GuideTarget } from '@/hooks/useGuideTargets';
 import { useToast } from '@/hooks/use-toast';
 import { useUserRole } from '@/hooks/useUserRole';
@@ -237,29 +238,70 @@ export function Dashboard({ onLogout }: DashboardProps) {
     }
   };
 
-  const handleFileContent = (content: string) => {
+  const handleFileContent = (content: string, fileType: FileType) => {
     setIsProcessing(true);
     try {
-      const data = parseMhtml(content);
-      // Store in the current view mode's local state
-      if (viewMode === 'day') {
-        setLocalDailyData(data);
-        setLocalDailyOverrides({});
-        setHasDailyChanges(true);
-      } else {
+      let data: ParsedMhtmlData;
+      
+      if (fileType === 'csv') {
+        // CSV files are typically for monthly data
+        // Check for unmapped logins first
+        const unmappedLogins = getUnmappedLogins(content, targets);
+        if (unmappedLogins.length > 0) {
+          toast({
+            title: 'Warning: Unmapped Login Names',
+            description: `The following login names are not configured in Admin Panel: ${unmappedLogins.slice(0, 5).join(', ')}${unmappedLogins.length > 5 ? ` and ${unmappedLogins.length - 5} more` : ''}. Configure them in Admin Panel → Monthly Targets.`,
+            variant: 'destructive',
+          });
+        }
+        
+        data = parseCsv(content, targets);
+        
+        if (data.salesData.length === 0) {
+          toast({
+            title: 'No Data Mapped',
+            description: 'No data was mapped from the CSV. Please ensure guides have their Login Names configured in Admin Panel.',
+            variant: 'destructive',
+          });
+          setIsProcessing(false);
+          return;
+        }
+        
+        // CSV is for monthly - switch to monthly view if not already
+        if (viewMode !== 'month') {
+          setViewMode('month');
+        }
         setLocalMonthlyData(data);
         setLocalMonthlyOverrides({});
         setHasMonthlyChanges(true);
+        
+        toast({
+          title: 'CSV Parsed Successfully',
+          description: `Found ${data.salesData.length} guides. Click "Publish Monthly" to save permanently.`,
+        });
+      } else {
+        // MHTML parsing
+        data = parseMhtml(content);
+        // Store in the current view mode's local state
+        if (viewMode === 'day') {
+          setLocalDailyData(data);
+          setLocalDailyOverrides({});
+          setHasDailyChanges(true);
+        } else {
+          setLocalMonthlyData(data);
+          setLocalMonthlyOverrides({});
+          setHasMonthlyChanges(true);
+        }
+        toast({
+          title: 'File Parsed Successfully',
+          description: `Found ${data.salesData.length} employees. Click "Publish ${viewMode === 'day' ? 'Daily' : 'Monthly'}" to save permanently.`,
+        });
       }
-      toast({
-        title: 'File Parsed Successfully',
-        description: `Found ${data.salesData.length} employees. Click "Publish ${viewMode === 'day' ? 'Daily' : 'Monthly'}" to save permanently.`,
-      });
     } catch (error) {
       console.error('Parse error:', error);
       toast({
         title: 'Parse Error',
-        description: error instanceof Error ? error.message : 'Failed to parse the MHTML file.',
+        description: error instanceof Error ? error.message : 'Failed to parse the file.',
         variant: 'destructive',
       });
     } finally {

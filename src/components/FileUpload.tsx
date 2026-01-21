@@ -3,8 +3,10 @@ import { Upload, FileText, AlertCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
 
+export type FileType = 'mhtml' | 'csv';
+
 interface FileUploadProps {
-  onFileContent: (content: string) => void;
+  onFileContent: (content: string, fileType: FileType) => void;
   isProcessing: boolean;
 }
 
@@ -15,10 +17,14 @@ export function FileUpload({ onFileContent, isProcessing }: FileUploadProps) {
 
   const processFile = useCallback(
     (file: File) => {
-      if (!file.name.endsWith('.mhtml') && !file.name.endsWith('.mht')) {
+      const fileName = file.name.toLowerCase();
+      const isMhtml = fileName.endsWith('.mhtml') || fileName.endsWith('.mht');
+      const isCsv = fileName.endsWith('.csv');
+      
+      if (!isMhtml && !isCsv) {
         toast({
           title: 'Invalid File Type',
-          description: 'Please upload a .mhtml or .mht file.',
+          description: 'Please upload a .mhtml, .mht, or .csv file.',
           variant: 'destructive',
         });
         return;
@@ -29,7 +35,8 @@ export function FileUpload({ onFileContent, isProcessing }: FileUploadProps) {
       const reader = new FileReader();
       reader.onload = (e) => {
         const content = e.target?.result as string;
-        onFileContent(content);
+        const fileType: FileType = isCsv ? 'csv' : 'mhtml';
+        onFileContent(content, fileType);
       };
       reader.onerror = () => {
         toast({
@@ -90,7 +97,7 @@ export function FileUpload({ onFileContent, isProcessing }: FileUploadProps) {
       >
         <input
           type="file"
-          accept=".mhtml,.mht"
+          accept=".mhtml,.mht,.csv"
           onChange={handleFileSelect}
           className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
           disabled={isProcessing}
@@ -116,7 +123,7 @@ export function FileUpload({ onFileContent, isProcessing }: FileUploadProps) {
               </div>
               <div>
                 <p className="font-medium text-foreground">
-                  Drop your MHTML file here
+                  Drop your MHTML or CSV file here
                 </p>
                 <p className="text-sm text-muted-foreground mt-1">
                   or click to browse
@@ -136,8 +143,9 @@ export function FileUpload({ onFileContent, isProcessing }: FileUploadProps) {
       <div className="flex items-start gap-2 mt-4 p-3 rounded-lg bg-muted/30">
         <AlertCircle className="w-4 h-4 text-muted-foreground mt-0.5 flex-shrink-0" />
         <p className="text-xs text-muted-foreground">
-          Upload the "Sales by Team" report exported as MHTML from your reporting system.
-          The file will be parsed automatically to extract sales data.
+          <strong>MHTML:</strong> Upload the "Sales by Team" report for daily data.{' '}
+          <strong>CSV:</strong> Upload monthly reports with Login Name, Orders, AOS, Conversion Rate, etc.
+          Ensure guides have their Login Names configured in Admin Panel for CSV mapping.
         </p>
       </div>
     </div>
