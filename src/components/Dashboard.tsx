@@ -13,6 +13,7 @@ import { useGuideTargets, GuideTarget } from '@/hooks/useGuideTargets';
 import { useToast } from '@/hooks/use-toast';
 import { useUserRole } from '@/hooks/useUserRole';
 import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
 import { supabase } from '@/integrations/supabase/client';
 import {
   TrendingUp,
@@ -34,6 +35,9 @@ import {
   Receipt,
   MessageCircle,
   FileText,
+  Edit3,
+  Check,
+  X,
 } from 'lucide-react';
 import { exportToPDF } from '@/lib/pdfExport';
 import wolfpackLogo from '@/assets/wolfpack-logo.png';
@@ -67,6 +71,8 @@ export function Dashboard({ onLogout }: DashboardProps) {
   const [viewMode, setViewMode] = useState<'day' | 'month'>('day');
   const [editingAgent, setEditingAgent] = useState<string | null>(null);
   const [isExporting, setIsExporting] = useState(false);
+  const [isEditingDateRange, setIsEditingDateRange] = useState(false);
+  const [editedDateRange, setEditedDateRange] = useState('');
   const { toast } = useToast();
 
   const {
@@ -452,6 +458,35 @@ export function Dashboard({ onLogout }: DashboardProps) {
     }
   };
 
+  // Handle date range update for monthly reports
+  const handleUpdateDateRange = () => {
+    if (!editedDateRange.trim()) return;
+    
+    const setLocalData = viewMode === 'day' ? setLocalDailyData : setLocalMonthlyData;
+    const setHasChanges = viewMode === 'day' ? setHasDailyChanges : setHasMonthlyChanges;
+    const currentData = hasLocalChanges ? localParsedData : publishedData;
+    
+    if (currentData) {
+      setLocalData({
+        ...currentData,
+        dateRange: editedDateRange.trim(),
+      });
+      setHasChanges(true);
+    }
+    
+    setIsEditingDateRange(false);
+    toast({
+      title: 'Date Range Updated',
+      description: `Updated to "${editedDateRange.trim()}". Click Publish to save.`,
+    });
+  };
+
+  const startEditingDateRange = () => {
+    const currentData = hasLocalChanges ? localParsedData : publishedData;
+    setEditedDateRange(currentData?.dateRange || '');
+    setIsEditingDateRange(true);
+  };
+
   if (isLoading || isLoadingPublished || isLoadingRole) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
@@ -687,10 +722,47 @@ export function Dashboard({ onLogout }: DashboardProps) {
                     Summary ({viewMode === 'day' ? 'Daily' : 'Monthly'})
                   </h2>
                 </div>
-                {parsedData.dateRange && (
+                {/* Date Range Display with Edit option for monthly */}
+                {isEditingDateRange ? (
+                  <div className="flex items-center gap-2">
+                    <Input
+                      value={editedDateRange}
+                      onChange={(e) => setEditedDateRange(e.target.value)}
+                      placeholder="e.g., Jan 1 - Jan 31, 2026"
+                      className="h-8 w-48 text-sm"
+                      autoFocus
+                    />
+                    <Button
+                      size="icon"
+                      variant="ghost"
+                      className="h-7 w-7 text-success hover:text-success"
+                      onClick={handleUpdateDateRange}
+                    >
+                      <Check className="w-4 h-4" />
+                    </Button>
+                    <Button
+                      size="icon"
+                      variant="ghost"
+                      className="h-7 w-7 text-destructive hover:text-destructive"
+                      onClick={() => setIsEditingDateRange(false)}
+                    >
+                      <X className="w-4 h-4" />
+                    </Button>
+                  </div>
+                ) : (
                   <div className={`flex items-center gap-2 text-muted-foreground rounded-lg ${isFullscreen ? 'text-sm bg-muted/30 px-4 py-2' : 'text-sm bg-muted/50 px-3 py-1.5'}`}>
                     <Calendar className="w-4 h-4" />
-                    {parsedData.dateRange}
+                    <span>{parsedData.dateRange || 'No date range'}</span>
+                    {viewMode === 'month' && !isFullscreen && (
+                      <Button
+                        size="icon"
+                        variant="ghost"
+                        className="h-6 w-6 ml-1 text-muted-foreground hover:text-primary"
+                        onClick={startEditingDateRange}
+                      >
+                        <Edit3 className="w-3.5 h-3.5" />
+                      </Button>
+                    )}
                   </div>
                 )}
               </div>
