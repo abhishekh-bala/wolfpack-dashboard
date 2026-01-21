@@ -13,7 +13,7 @@ import {
   TableRow,
 } from '@/components/ui/table';
 
-type SortField = 'name' | 'orders' | 'newRevenue' | 'revenueDeficit' | 'orderDeficit' | 'chatCount' | 'nrpc' | 'currentConversion' | 'ordersToTarget';
+type SortField = 'name' | 'orders' | 'newRevenue' | 'revenueDeficit' | 'orderDeficit' | 'chatCount' | 'nrpc' | 'currentConversion' | 'ordersToTarget' | 'netNewSales' | 'nnrpc' | 'refundPercent' | 'aos';
 type SortDirection = 'asc' | 'desc';
 
 interface ComputedData extends SalesData {
@@ -28,6 +28,12 @@ interface ComputedData extends SalesData {
   isFromFile: boolean;
   hasChatData: boolean;
   nrpc: number;
+  // CSV monthly metrics
+  csvNetNewSales: number;
+  csvNnrpc: number;
+  csvRefundPercent: number;
+  csvAos: number;
+  hasCsvData: boolean;
 }
 
 interface SalesTableProps {
@@ -115,6 +121,13 @@ export function SalesTable({
         : 0;
       const nrpc = hasChatData ? newRevenue / chatCount : 0;
 
+      // CSV-specific metrics (from parsed CSV file)
+      const csvNetNewSales = sales?.netNewSales ?? 0;
+      const csvNnrpc = sales?.nnrpc ?? 0;
+      const csvRefundPercent = sales?.refundPercent ?? 0;
+      const csvAos = sales?.avgOrderSize ?? 0;
+      const hasCsvData = csvNetNewSales > 0 || csvNnrpc > 0 || csvRefundPercent > 0;
+
       result.push({
         name: target.name,
         orders,
@@ -132,10 +145,14 @@ export function SalesTable({
         isFromFile: !!sales,
         hasChatData,
         nrpc,
+        csvNetNewSales,
+        csvNnrpc,
+        csvRefundPercent,
+        csvAos,
+        hasCsvData,
       });
     });
 
-    // Then add any sales data not in targets
     salesData.forEach((item) => {
       const key = item.name.toLowerCase();
       if (!processedNames.has(key)) {
@@ -152,6 +169,11 @@ export function SalesTable({
           isFromFile: true,
           hasChatData: false,
           nrpc: 0,
+          csvNetNewSales: item.netNewSales ?? 0,
+          csvNnrpc: item.nnrpc ?? 0,
+          csvRefundPercent: item.refundPercent ?? 0,
+          csvAos: item.avgOrderSize ?? 0,
+          hasCsvData: (item.netNewSales ?? 0) > 0 || (item.nnrpc ?? 0) > 0 || (item.refundPercent ?? 0) > 0,
         });
       }
     });
@@ -197,6 +219,22 @@ export function SalesTable({
         case 'ordersToTarget':
           aVal = a.ordersToTarget;
           bVal = b.ordersToTarget;
+          break;
+        case 'netNewSales':
+          aVal = a.csvNetNewSales;
+          bVal = b.csvNetNewSales;
+          break;
+        case 'nnrpc':
+          aVal = a.csvNnrpc;
+          bVal = b.csvNnrpc;
+          break;
+        case 'refundPercent':
+          aVal = a.csvRefundPercent;
+          bVal = b.csvRefundPercent;
+          break;
+        case 'aos':
+          aVal = a.csvAos;
+          bVal = b.csvAos;
           break;
         default:
           aVal = a.newRevenue;
@@ -250,7 +288,7 @@ export function SalesTable({
         <span>→</span>
       </div>
       <div className="overflow-x-auto -webkit-overflow-scrolling-touch">
-        <Table className={`${compact ? 'text-xs' : ''} min-w-[900px]`}>
+        <Table className={`${compact ? 'text-xs' : ''} ${viewMode === 'month' ? 'min-w-[1300px]' : 'min-w-[900px]'}`}>
           <TableHeader>
             <TableRow className={`hover:bg-muted/50 ${isFullscreen ? 'bg-muted/30' : 'bg-gradient-to-r from-muted/50 via-muted/30 to-muted/50'}`}>
               <TableHead 
@@ -297,6 +335,35 @@ export function SalesTable({
               >
                 <div className="flex items-center justify-center">NRPC<SortIcon field="nrpc" /></div>
               </TableHead>
+              {/* CSV Monthly columns */}
+              {viewMode === 'month' && (
+                <>
+                  <TableHead 
+                    className={`text-foreground font-bold text-right cursor-pointer hover:text-primary transition-colors whitespace-nowrap ${isFullscreen ? 'text-sm py-4' : compact ? 'py-2' : 'py-2 sm:py-3'}`}
+                    onClick={() => handleSort('netNewSales')}
+                  >
+                    <div className="flex items-center justify-end">Net New<SortIcon field="netNewSales" /></div>
+                  </TableHead>
+                  <TableHead 
+                    className={`text-foreground font-bold text-center cursor-pointer hover:text-primary transition-colors whitespace-nowrap ${isFullscreen ? 'text-sm py-4' : compact ? 'py-2' : 'py-2 sm:py-3'}`}
+                    onClick={() => handleSort('nnrpc')}
+                  >
+                    <div className="flex items-center justify-center">NNRPC<SortIcon field="nnrpc" /></div>
+                  </TableHead>
+                  <TableHead 
+                    className={`text-foreground font-bold text-center cursor-pointer hover:text-primary transition-colors whitespace-nowrap ${isFullscreen ? 'text-sm py-4' : compact ? 'py-2' : 'py-2 sm:py-3'}`}
+                    onClick={() => handleSort('refundPercent')}
+                  >
+                    <div className="flex items-center justify-center">Refund%<SortIcon field="refundPercent" /></div>
+                  </TableHead>
+                  <TableHead 
+                    className={`text-foreground font-bold text-center cursor-pointer hover:text-primary transition-colors whitespace-nowrap ${isFullscreen ? 'text-sm py-4' : compact ? 'py-2' : 'py-2 sm:py-3'}`}
+                    onClick={() => handleSort('aos')}
+                  >
+                    <div className="flex items-center justify-center">AOS<SortIcon field="aos" /></div>
+                  </TableHead>
+                </>
+              )}
               <TableHead 
                 className={`text-foreground font-bold text-center cursor-pointer hover:text-primary transition-colors whitespace-nowrap ${isFullscreen ? 'text-sm py-4' : compact ? 'py-2' : 'py-2 sm:py-3'}`}
                 onClick={() => handleSort('currentConversion')}
@@ -451,6 +518,42 @@ export function SalesTable({
                       <span className="text-muted-foreground">-</span>
                     )}
                   </TableCell>
+
+                  {/* CSV Monthly columns */}
+                  {viewMode === 'month' && (
+                    <>
+                      <TableCell className={`text-right font-mono ${compact ? 'py-1.5' : isFullscreen ? 'py-4 text-base' : ''}`}>
+                        {row.hasCsvData ? (
+                          <span className="font-semibold text-cyan-400">{formatCurrency(row.csvNetNewSales)}</span>
+                        ) : (
+                          <span className="text-muted-foreground">-</span>
+                        )}
+                      </TableCell>
+                      <TableCell className={`text-center font-mono ${compact ? 'py-1.5' : isFullscreen ? 'py-4 text-base' : ''}`}>
+                        {row.hasCsvData ? (
+                          <span className="font-semibold text-violet-400">{formatCurrency(row.csvNnrpc)}</span>
+                        ) : (
+                          <span className="text-muted-foreground">-</span>
+                        )}
+                      </TableCell>
+                      <TableCell className={`text-center font-mono ${compact ? 'py-1.5' : isFullscreen ? 'py-4 text-base' : ''}`}>
+                        {row.hasCsvData ? (
+                          <span className={`font-semibold ${row.csvRefundPercent > 5 ? 'text-destructive' : 'text-foreground'}`}>
+                            {row.csvRefundPercent.toFixed(1)}%
+                          </span>
+                        ) : (
+                          <span className="text-muted-foreground">-</span>
+                        )}
+                      </TableCell>
+                      <TableCell className={`text-center font-mono ${compact ? 'py-1.5' : isFullscreen ? 'py-4 text-base' : ''}`}>
+                        {row.hasCsvData ? (
+                          <span className="font-semibold text-amber-400">{formatCurrency(row.csvAos)}</span>
+                        ) : (
+                          <span className="text-muted-foreground">-</span>
+                        )}
+                      </TableCell>
+                    </>
+                  )}
 
                   <TableCell className={`text-center font-mono ${compact ? 'py-1.5' : isFullscreen ? 'py-4 text-base' : ''}`}>
                     {row.hasChatData ? (
