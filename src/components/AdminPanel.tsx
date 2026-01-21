@@ -85,6 +85,7 @@ export function AdminPanel({
 
     const newTarget: GuideTarget = {
       name: newGuideName.trim(),
+      loginName: '',
       targetOrders: 0,
       targetRevenue: 0,
       targetConversion: 0,
@@ -111,7 +112,7 @@ export function AdminPanel({
     });
   };
 
-  const handleTargetChange = (name: string, field: keyof GuideTarget, value: number) => {
+  const handleTargetChange = (name: string, field: keyof GuideTarget, value: number | string) => {
     setLocalTargets(localTargets.map((t) => (t.name === name ? { ...t, [field]: value } : t)));
   };
 
@@ -230,6 +231,25 @@ export function AdminPanel({
                         <Trash2 className="w-4 h-4" />
                       </Button>
                     </div>
+                    
+                    {/* Login Name field - only visible when in monthly mode for CSV mapping */}
+                    {viewMode === 'month' && (
+                      <div className="mb-3">
+                        <Label className="text-xs text-muted-foreground">
+                          Login Name (for CSV mapping)
+                        </Label>
+                        <Input
+                          type="text"
+                          placeholder="e.g., jdoe, john.doe"
+                          value={target.loginName || ''}
+                          onChange={(e) =>
+                            handleTargetChange(target.name, 'loginName', e.target.value)
+                          }
+                          className="input-dark mt-1"
+                        />
+                      </div>
+                    )}
+                    
                     <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                       <div>
                         <Label className="text-xs text-muted-foreground">
