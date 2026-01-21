@@ -32,9 +32,9 @@ import {
   ShoppingCart,
   Receipt,
   MessageCircle,
-  Download,
+  FileText,
 } from 'lucide-react';
-import html2canvas from 'html2canvas';
+import { exportToPDF } from '@/lib/pdfExport';
 import wolfpackLogo from '@/assets/wolfpack-logo.png';
 
 interface DashboardProps {
@@ -191,47 +191,45 @@ export function Dashboard({ onLogout }: DashboardProps) {
     };
   }, [isFullscreen]);
 
-  // Export dashboard as image
+  // Export dashboard as PDF
   const handleExportReport = async () => {
-    if (!rootRef.current) return;
-    
     setIsExporting(true);
     try {
-      // Add export mode class to hide particles
-      rootRef.current.classList.add('export-mode');
-      
-      // Wait for next frame to ensure class is applied
-      await new Promise(resolve => requestAnimationFrame(resolve));
-      
-      const canvas = await html2canvas(rootRef.current, {
-        backgroundColor: '#0a0c10',
-        scale: 2,
-        useCORS: true,
-        logging: false,
-        windowWidth: rootRef.current.scrollWidth,
-        windowHeight: rootRef.current.scrollHeight,
+      await exportToPDF({
+        dailyData: publishedDailyData ? {
+          salesData: publishedDailyData.salesData.map(agent => {
+            const override = publishedDailyOverrides[agent.name];
+            return override ? { ...agent, ...override } : agent;
+          }),
+          summary: {
+            newSales: publishedDailyData.salesData.reduce((sum, a) => sum + (publishedDailyOverrides[a.name]?.newRevenue ?? a.newRevenue), 0),
+            newOrders: publishedDailyData.salesData.reduce((sum, a) => sum + (publishedDailyOverrides[a.name]?.orders ?? a.orders), 0),
+          },
+          dateRange: publishedDailyData.dateRange,
+        } : null,
+        monthlyData: publishedMonthlyData ? {
+          salesData: publishedMonthlyData.salesData.map(agent => {
+            const override = publishedMonthlyOverrides[agent.name];
+            return override ? { ...agent, ...override } : agent;
+          }),
+          summary: {
+            newSales: publishedMonthlyData.salesData.reduce((sum, a) => sum + (publishedMonthlyOverrides[a.name]?.newRevenue ?? a.newRevenue), 0),
+            newOrders: publishedMonthlyData.salesData.reduce((sum, a) => sum + (publishedMonthlyOverrides[a.name]?.orders ?? a.orders), 0),
+          },
+          dateRange: publishedMonthlyData.dateRange,
+        } : null,
+        targets,
       });
-      
-      // Remove export mode class
-      rootRef.current.classList.remove('export-mode');
-      
-      // Download the image
-      const link = document.createElement('a');
-      const dateStr = new Date().toISOString().split('T')[0];
-      link.download = `wolfpack-report-${viewMode}-${dateStr}.png`;
-      link.href = canvas.toDataURL('image/png');
-      link.click();
       
       toast({
         title: 'Report Exported',
-        description: 'Dashboard screenshot saved successfully.',
+        description: 'PDF report downloaded successfully.',
       });
     } catch (error) {
       console.error('Export error:', error);
-      rootRef.current?.classList.remove('export-mode');
       toast({
         title: 'Export Failed',
-        description: 'Failed to export dashboard. Please try again.',
+        description: 'Failed to export report. Please try again.',
         variant: 'destructive',
       });
     } finally {
@@ -535,11 +533,11 @@ export function Dashboard({ onLogout }: DashboardProps) {
                 variant="outline"
                 size="sm"
                 onClick={handleExportReport}
-                disabled={isExporting || !parsedData}
+                disabled={isExporting || (!publishedDailyData && !publishedMonthlyData)}
                 className="gap-1 sm:gap-2 px-2 sm:px-3 border-success/30 hover:border-success hover:bg-success/10 text-success"
               >
-                {isExporting ? <Loader2 className="w-4 h-4 animate-spin" /> : <Download className="w-4 h-4" />}
-                <span className="hidden sm:inline">Export</span>
+                {isExporting ? <Loader2 className="w-4 h-4 animate-spin" /> : <FileText className="w-4 h-4" />}
+                <span className="hidden sm:inline">Export PDF</span>
               </Button>
 
               {/* Fullscreen Toggle */}

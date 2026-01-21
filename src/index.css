@@ -465,7 +465,3 @@
   box-shadow: 0 0 20px hsl(var(--success) / 0.3);
 }
 
-/* Export mode - hide particles for clean export */
-.export-mode .particle-network {
-  display: none !important;
-}
