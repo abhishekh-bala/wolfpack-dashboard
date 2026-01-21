@@ -81,14 +81,21 @@ export function parseCsv(
 
     // Parse numeric values, handling currency symbols and percentages
     const orders = parseNumericValue(values[columnMap.orders]);
-    const aos = parseNumericValue(values[columnMap.aos]);
-    const conversionRate = parseNumericValue(values[columnMap.conversionRate]);
     const sales = parseNumericValue(values[columnMap.sales]);
+    const salesRefund = parseNumericValue(values[columnMap.salesRefund]);
     const netNewSales = parseNumericValue(values[columnMap.netNewSales]);
     const chats = parseNumericValue(values[columnMap.chats]);
 
-    // Use netNewSales as newRevenue if available, otherwise use sales
-    const newRevenue = netNewSales > 0 ? netNewSales : sales;
+    // Calculate derived metrics using formulas
+    // AOS: New Sales / Orders
+    const aos = orders > 0 ? sales / orders : 0;
+    // NNRPC: Net New Sales / Chats
+    const nnrpc = chats > 0 ? netNewSales / chats : 0;
+    // Refunds%: (Refund/Revenue) * 100
+    const refundPercent = sales > 0 ? (salesRefund / sales) * 100 : 0;
+
+    // Map "Sales" column to Revenue (newRevenue)
+    const newRevenue = sales;
 
     salesData.push({
       name: guideName,
@@ -96,6 +103,11 @@ export function parseCsv(
       avgOrderSize: aos,
       total: sales,
       newRevenue,
+      // CSV-specific fields
+      netNewSales,
+      nnrpc,
+      refundPercent,
+      chats,
     });
   }
 

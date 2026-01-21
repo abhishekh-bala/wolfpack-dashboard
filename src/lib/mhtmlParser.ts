@@ -4,6 +4,11 @@ export interface SalesData {
   avgOrderSize: number;
   total: number;
   newRevenue: number;
+  // CSV-specific fields (monthly data)
+  netNewSales?: number;
+  nnrpc?: number;
+  refundPercent?: number;
+  chats?: number;
 }
 
 export interface ParsedMhtmlData {
