@@ -13,12 +13,13 @@ import {
   TableRow,
 } from '@/components/ui/table';
 
-type SortField = 'name' | 'orders' | 'newRevenue' | 'revenueDeficit' | 'orderDeficit' | 'chatCount' | 'nrpc' | 'currentConversion' | 'ordersToTarget' | 'netNewSales' | 'nnrpc' | 'refundPercent' | 'aos';
+type SortField = 'name' | 'orders' | 'newRevenue' | 'revenueDeficit' | 'targetPercent' | 'orderDeficit' | 'chatCount' | 'nrpc' | 'currentConversion' | 'ordersToTarget' | 'netNewSales' | 'nnrpc' | 'refundPercent' | 'aos';
 type SortDirection = 'asc' | 'desc';
 
 interface ComputedData extends SalesData {
   targetRevenue: number;
   revenueDeficit: number;
+  targetPercent: number;
   targetOrders: number;
   orderDeficit: number;
   chatCount: number;
@@ -114,6 +115,7 @@ export function SalesTable({
 
       // Calculate computed values
       const revenueDeficit = targetRevenue - newRevenue;
+      const targetPercent = targetRevenue > 0 ? (newRevenue / targetRevenue) * 100 : 0;
       const orderDeficit = targetOrders - orders;
       const currentConversion = hasChatData ? (orders / chatCount) * 100 : 0;
       const ordersToTarget = hasChatData
@@ -136,6 +138,7 @@ export function SalesTable({
         newRevenue,
         targetRevenue,
         revenueDeficit,
+        targetPercent,
         targetOrders,
         orderDeficit,
         chatCount,
@@ -160,6 +163,7 @@ export function SalesTable({
           ...item,
           targetRevenue: 0,
           revenueDeficit: -item.newRevenue,
+          targetPercent: 0,
           targetOrders: 0,
           orderDeficit: -item.orders,
           chatCount: 0,
@@ -199,6 +203,10 @@ export function SalesTable({
         case 'revenueDeficit':
           aVal = a.revenueDeficit;
           bVal = b.revenueDeficit;
+          break;
+        case 'targetPercent':
+          aVal = a.targetPercent;
+          bVal = b.targetPercent;
           break;
         case 'orderDeficit':
           aVal = a.orderDeficit;
@@ -288,7 +296,7 @@ export function SalesTable({
         <span>→</span>
       </div>
       <div className="overflow-x-auto -webkit-overflow-scrolling-touch">
-        <Table className={`${compact ? 'text-xs' : ''} ${viewMode === 'month' ? 'min-w-[1300px]' : 'min-w-[900px]'}`}>
+        <Table className={`${compact ? 'text-xs' : ''} ${viewMode === 'month' ? 'min-w-[1400px]' : 'min-w-[1000px]'}`}>
           <TableHeader>
             <TableRow className={`hover:bg-muted/50 ${isFullscreen ? 'bg-muted/30' : 'bg-gradient-to-r from-muted/50 via-muted/30 to-muted/50'}`}>
               <TableHead 
@@ -315,6 +323,12 @@ export function SalesTable({
                 onClick={() => handleSort('revenueDeficit')}
               >
                 <div className="flex items-center justify-end">Deficit<SortIcon field="revenueDeficit" /></div>
+              </TableHead>
+              <TableHead 
+                className={`text-foreground font-bold text-center cursor-pointer hover:text-primary transition-colors whitespace-nowrap ${isFullscreen ? 'text-sm py-4' : compact ? 'py-2' : 'py-2 sm:py-3'}`}
+                onClick={() => handleSort('targetPercent')}
+              >
+                <div className="flex items-center justify-center">Target%<SortIcon field="targetPercent" /></div>
               </TableHead>
               <TableHead className={`text-foreground font-bold text-center whitespace-nowrap ${isFullscreen ? 'text-sm py-4' : compact ? 'py-2' : 'py-2 sm:py-3'}`}>Tgt Ord</TableHead>
               <TableHead 
@@ -487,6 +501,16 @@ export function SalesTable({
                     )}
                   </TableCell>
 
+                  <TableCell className={`text-center font-mono ${compact ? 'py-1.5' : isFullscreen ? 'py-4 text-base' : ''}`}>
+                    {row.targetRevenue > 0 ? (
+                      <span className={`font-semibold ${row.targetPercent >= 100 ? 'text-success' : row.targetPercent >= 80 ? 'text-warning' : 'text-destructive'}`}>
+                        {row.targetPercent.toFixed(1)}%
+                      </span>
+                    ) : (
+                      <span className="text-muted-foreground">-</span>
+                    )}
+                  </TableCell>
+
                   <TableCell className={`text-center font-mono text-muted-foreground ${compact ? 'py-1.5' : isFullscreen ? 'py-4 text-base' : ''}`}>
                     {row.targetOrders > 0 ? row.targetOrders : '-'}
                   </TableCell>
@@ -503,7 +527,7 @@ export function SalesTable({
 
                   <TableCell className={`text-center font-mono ${compact ? 'py-1.5' : isFullscreen ? 'py-4 text-base' : ''}`}>
                     {row.hasChatData ? (
-                      <span className="inline-flex items-center justify-center min-w-[2rem] px-2 py-0.5 rounded bg-accent/20 text-accent">
+                      <span className="inline-flex items-center justify-center min-w-[2rem] px-2 py-0.5 rounded bg-primary/20 text-primary font-semibold">
                         {row.chatCount}
                       </span>
                     ) : (
