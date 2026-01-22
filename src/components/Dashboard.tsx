@@ -3,6 +3,7 @@ import { FileUpload, FileType } from './FileUpload';
 import { SalesTable } from './SalesTable';
 import { StatCard } from './StatCard';
 import { AdminPanel } from './AdminPanel';
+import { UserManagement } from './UserManagement';
 import { PerformanceCharts } from './PerformanceCharts';
 import { FullscreenGraphsView } from './FullscreenGraphsView';
 import { Footer } from './Footer';
@@ -635,15 +636,18 @@ export function Dashboard({ onLogout }: DashboardProps) {
               {!isFullscreen && (
                 <>
                   {isAdmin && (
-                    <AdminPanel
-                      targets={targets}
-                      formulas={formulas}
-                      onSaveTargets={saveTargets}
-                      onSaveFormulas={saveFormulas}
-                      onResetFormulas={resetFormulas}
-                      viewMode={viewMode}
-                      onViewModeChange={setViewMode}
-                    />
+                    <>
+                      <UserManagement />
+                      <AdminPanel
+                        targets={targets}
+                        formulas={formulas}
+                        onSaveTargets={saveTargets}
+                        onSaveFormulas={saveFormulas}
+                        onResetFormulas={resetFormulas}
+                        viewMode={viewMode}
+                        onViewModeChange={setViewMode}
+                      />
+                    </>
                   )}
                   <Button
                     variant="ghost"
